@@ -410,13 +410,16 @@ function applyStockMap(rawMap){
   hitungTotal();
 }
 function setSubmitLoading(isLoading){
-  const ids=['btnOrderD','btnOrderM'];
-  ids.forEach(id=>{
-    const btn=document.getElementById(id);
-    if(!btn)return;
-    btn.disabled=!!isLoading;
-    btn.innerHTML=isLoading?'<i class="fas fa-spinner fa-spin"></i> Memproses...':'<i class="fas fa-shopping-bag"></i> Lihat Keranjang';
-  });
+  const desktopBtn=document.getElementById('btnOrderD');
+  if(desktopBtn){
+    desktopBtn.disabled=!!isLoading;
+    desktopBtn.innerHTML=isLoading?'<i class="fas fa-spinner fa-spin"></i> Memproses...':'<i class="fas fa-shopping-bag"></i> Lihat Keranjang';
+  }
+  const mobileBtn=document.getElementById('btnOrderM');
+  if(mobileBtn){
+    mobileBtn.disabled=!!isLoading;
+    mobileBtn.innerHTML=isLoading?'<i class="fas fa-spinner fa-spin"></i> Memproses...':'<i class="fas fa-check"></i> Proses';
+  }
 }
 function buildCurrentOrderPayload(){
   const nama=getNamaPemesan();
@@ -819,9 +822,13 @@ function hitungTotal(){
   document.getElementById('grandTotalMob').innerText=fmt(total);
   document.getElementById('grandTotalMSheet').innerText=fmt(total);
   document.getElementById('subtotalM').innerText=fmt(subtotal);
-  document.getElementById('totalPerHariM').innerText=fmt(total);
   document.getElementById('durInfoD').innerText=dur;
-  document.getElementById('durInfoM').innerText=dur;
+  const totalPerHariM=document.getElementById('totalPerHariM');
+  if(totalPerHariM)totalPerHariM.innerText=fmt(total);
+  const durInfoM=document.getElementById('durInfoM');
+  if(durInfoM)durInfoM.innerText=dur;
+  const durMini=document.getElementById('durInfoMTotal');
+  if(durMini)durMini.innerText=dur;
   positionDesktopFooter();
 }
 
@@ -890,13 +897,6 @@ function openCartSheet(){
   saveOrderDraft();
 }
 function handleMobileOrderCTA(){
-  const namaReady=!!getNamaPemesan();
-  const tglReady=!!document.getElementById('tglPesan').value;
-  const cartReady=cart.length>0;
-  if(namaReady && tglReady && cartReady){
-    tampilRingkasan();
-    return;
-  }
   openCartSheet();
 }
 function closeCartSheet(){

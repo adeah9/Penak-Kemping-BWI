@@ -1,8 +1,8 @@
 // Admin logic (Google Sheet + auth)
 let adminStockLoaded = false;
 let adminOrdersAll = [];
-let adminFilterState = {mode:'date',date:'',month:'',sort:'date_desc',status:'all'};
-let adminFilterDraft = {mode:'date',date:'',month:'',sort:'date_desc',status:'all'};
+let adminFilterState = {mode:'date',date:'',month:'',sort:'date_desc'};
+let adminFilterDraft = {mode:'date',date:'',month:'',sort:'date_desc'};
 let adminStockSnapshot = {};
 let pendingStockChanges = {};
 let stockSearchKeyword = '';
@@ -254,13 +254,7 @@ function hasOrderFilter(stateObj){
   if((s.mode||'date')==='month')return !!s.month;
   return !!s.date;
 }
-function hasStatusFilter(stateObj){
-  const s=stateObj||adminFilterState;
-  return !!s.status && s.status!=='all';
-}
-function hasAnyAdminFilter(stateObj){
-  return hasOrderFilter(stateObj)||hasStatusFilter(stateObj);
-}
+function hasAnyAdminFilter(stateObj){return hasOrderFilter(stateObj);}
 function setAdminFilterMode(mode){
   adminFilterDraft.mode=(mode==='month')?'month':'date';
   if(adminFilterDraft.mode==='date'){
@@ -279,32 +273,25 @@ function setAdminFilterMonthInput(v){
 function setAdminSortMode(v){
   adminFilterDraft.sort=(v==='date_asc')?'date_asc':'date_desc';
 }
-function setAdminStatusFilter(status){
-  adminFilterDraft.status=status||'all';
-  syncAdminStatusChips();
-}
-function syncAdminStatusChips(){
-  const active=adminFilterDraft.status||'all';
-  document.querySelectorAll('#adminStatusChips .admin-chip').forEach(btn=>{
-    btn.classList.toggle('active',btn.getAttribute('data-status')===active);
-  });
-}
 function syncAdminFilterInputs(){
   const modeEl=document.getElementById('adminFilterMode');
   const fDate=document.getElementById('adminFilterDate');
   const fMonth=document.getElementById('adminFilterMonth');
   const sortEl=document.getElementById('adminSortMode');
+  const timeLbl=document.getElementById('adminFilterTimeLabel');
   if(modeEl)modeEl.value=adminFilterDraft.mode;
   if(fDate){
     fDate.value=adminFilterDraft.date||'';
     fDate.disabled=adminFilterDraft.mode!=='date';
+    fDate.style.display=adminFilterDraft.mode==='date'?'block':'none';
   }
   if(fMonth){
     fMonth.value=adminFilterDraft.month||'';
     fMonth.disabled=adminFilterDraft.mode!=='month';
+    fMonth.style.display=adminFilterDraft.mode==='month'?'block':'none';
   }
   if(sortEl)sortEl.value=adminFilterDraft.sort;
-  syncAdminStatusChips();
+  if(timeLbl)timeLbl.innerText=adminFilterDraft.mode==='month'?'Filter Bulan':'Filter Tanggal';
 }
 function applyAdminFilters(){
   adminFilterState={...adminFilterDraft};
@@ -319,10 +306,6 @@ function applyAdminOrderFilters(rows){
       list=list.filter(r=>normalizeOrderDateKey(r.tanggalAmbil||'')===adminFilterState.date);
     }
   }
-  if(hasStatusFilter(adminFilterState)){
-    const target=String(adminFilterState.status||'').toLowerCase();
-    list=list.filter(r=>String(r.status||'').toLowerCase()===target);
-  }
   list.sort(compareOrderRows);
   return list;
 }
@@ -334,10 +317,6 @@ function renderAdminPeriodMeta(filtered,total){
     el.innerText=`Menampilkan semua data order. Order: ${total||0}, Omzet: ${fmt(omzet)}.`;
     return;
   }
-  if(hasStatusFilter(adminFilterState) && !hasOrderFilter(adminFilterState)){
-    el.innerText=`Filter status ${adminFilterState.status}. Ditampilkan ${filtered.length} order, omzet ${fmt(omzet)}.`;
-    return;
-  }
   if(adminFilterState.mode==='month'){
     const monthLabel=/^\d{4}-\d{2}$/.test(adminFilterState.month)
       ? new Date(Number(adminFilterState.month.slice(0,4)),Number(adminFilterState.month.slice(5,7))-1,1).toLocaleDateString('id-ID',{month:'long',year:'numeric'})
@@ -345,8 +324,7 @@ function renderAdminPeriodMeta(filtered,total){
     el.innerText=`Filter per bulan ${monthLabel}. Ditampilkan ${filtered.length} order, omzet ${fmt(omzet)}.`;
     return;
   }
-  const statusInfo=hasStatusFilter(adminFilterState)?` | Status ${adminFilterState.status}`:'';
-  el.innerText=`Filter per tanggal ${formatDbDate(adminFilterState.date)}${statusInfo}. Ditampilkan ${filtered.length} order, omzet ${fmt(omzet)}.`;
+  el.innerText=`Filter per tanggal ${formatDbDate(adminFilterState.date)}. Ditampilkan ${filtered.length} order, omzet ${fmt(omzet)}.`;
 }
 function refreshAdminOrderView(){
   const filtered=applyAdminOrderFilters(adminOrdersAll);
@@ -355,8 +333,8 @@ function refreshAdminOrderView(){
   updateAdminRecap(filtered);
 }
 function resetAdminFilters(){
-  adminFilterState={mode:'date',date:'',month:'',sort:'date_desc',status:'all'};
-  adminFilterDraft={mode:'date',date:'',month:'',sort:'date_desc',status:'all'};
+  adminFilterState={mode:'date',date:'',month:'',sort:'date_desc'};
+  adminFilterDraft={mode:'date',date:'',month:'',sort:'date_desc'};
   syncAdminFilterInputs();
   refreshAdminOrderView();
 }
@@ -375,10 +353,7 @@ function updateAdminRecap(filteredRows){
     sourceRows=filteredRows||[];
     totalOrder=sourceRows.length;
     totalOmzet=sourceRows.reduce((sum,r)=>sum+(Number(r.total)||0),0);
-    if(hasStatusFilter(adminFilterState) && !hasOrderFilter(adminFilterState)){
-      if(orderLabel)orderLabel.innerText=`Order ${adminFilterState.status}`;
-      if(omzetLabel)omzetLabel.innerText=`Omzet ${adminFilterState.status}`;
-    }else if(adminFilterState.mode==='month'){
+    if(adminFilterState.mode==='month'){
       const labelMonth=/^\d{4}-\d{2}$/.test(adminFilterState.month)
         ? new Date(Number(adminFilterState.month.slice(0,4)),Number(adminFilterState.month.slice(5,7))-1,1).toLocaleDateString('id-ID',{month:'short',year:'numeric'})
         : adminFilterState.month;

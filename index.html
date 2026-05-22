@@ -199,12 +199,9 @@
         </select>
       </div>
       <div class="admin-filter-item">
-        <div class="cf-label">Filter Tanggal</div>
+        <div class="cf-label" id="adminFilterTimeLabel">Filter Tanggal</div>
         <input type="date" class="cf-input" id="adminFilterDate" onchange="setAdminFilterDateInput(this.value)">
-      </div>
-      <div class="admin-filter-item">
-        <div class="cf-label">Filter Bulan</div>
-        <input type="month" class="cf-input" id="adminFilterMonth" onchange="setAdminFilterMonthInput(this.value)" disabled>
+        <input type="month" class="cf-input" id="adminFilterMonth" onchange="setAdminFilterMonthInput(this.value)" style="display:none">
       </div>
       <div class="admin-filter-item">
         <div class="cf-label">Urutkan</div>
@@ -216,17 +213,6 @@
       <div class="admin-filter-btns">
         <button class="admin-btn pri" onclick="applyAdminFilters()">Terapkan Filter</button>
         <button class="admin-btn" onclick="resetAdminFilters()">Reset Filter</button>
-      </div>
-    </div>
-    <div class="admin-status-filter-row">
-      <div class="cf-label">Filter Status</div>
-      <div class="admin-status-chips" id="adminStatusChips">
-        <button type="button" class="admin-chip active" data-status="all" onclick="setAdminStatusFilter('all')">Semua</button>
-        <button type="button" class="admin-chip" data-status="Baru" onclick="setAdminStatusFilter('Baru')">Baru</button>
-        <button type="button" class="admin-chip" data-status="Diproses" onclick="setAdminStatusFilter('Diproses')">Diproses</button>
-        <button type="button" class="admin-chip" data-status="Diambil" onclick="setAdminStatusFilter('Diambil')">Diambil</button>
-        <button type="button" class="admin-chip" data-status="Selesai" onclick="setAdminStatusFilter('Selesai')">Selesai</button>
-        <button type="button" class="admin-chip" data-status="Cancel" onclick="setAdminStatusFilter('Cancel')">Cancel</button>
       </div>
     </div>
     <div class="admin-period-meta" id="adminPeriodMeta">Menampilkan semua data order.</div>

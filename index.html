@@ -69,10 +69,10 @@
 
 <div class="wrap">
   <div class="tab-nav">
-    <button class="tab-btn active" onclick="switchTab('catalog',this)">Katalog Alat</button>
-    <button class="tab-btn" onclick="switchTab('package',this)">Paket Hemat</button>
-    <button class="tab-btn" onclick="switchTab('picnic',this)">Paket Piknik</button>
     <button type="button" class="tab-btn tab-btn-katalog" onclick="window.open('KATALOG.pdf','_blank','noopener')"><i class="fas fa-file-pdf" style="font-size:10px;margin-right:6px"></i>Katalog</button>
+    <button class="tab-btn active" data-tab="catalog" onclick="switchTab('catalog',this)">Katalog Alat</button>
+    <button class="tab-btn" data-tab="package" onclick="switchTab('package',this)">Paket Hemat</button>
+    <button class="tab-btn" data-tab="picnic" onclick="switchTab('picnic',this)">Paket Piknik</button>
   </div>
 
   <!-- Catalog / Package / Piknik view -->
@@ -186,7 +186,7 @@
       <div class="admin-head-actions">
         <button class="admin-btn" onclick="loadOrdersFromSheet()">Refresh</button>
         <button class="admin-btn pri" onclick="toggleAdminForm()">Tambah Manual</button>
-        <button class="admin-btn" onclick="toggleStockPanel()">Stok Item</button>
+        <button class="admin-btn pri" onclick="toggleStockPanel()">Stok Item</button>
       </div>
     </div>
     <div class="admin-filter-row">
@@ -329,23 +329,18 @@
       <table class="admin-table">
         <thead>
           <tr>
-            <th>Kode Pesanan</th>
             <th>Nama</th>
             <th>WhatsApp</th>
-            <th>Jaminan</th>
             <th>Tgl Ambil</th>
-            <th>Tgl Kembali</th>
             <th>Durasi</th>
-            <th>Daftar Item</th>
-            <th>Catatan</th>
+            <th>Item</th>
             <th>Total</th>
-            <th>Waktu Order</th>
             <th>Status</th>
             <th>Aksi</th>
           </tr>
         </thead>
         <tbody id="adminOrdersBody">
-          <tr><td colspan="13" class="admin-empty">Belum ada data.</td></tr>
+          <tr><td colspan="8" class="admin-empty">Belum ada data.</td></tr>
         </tbody>
       </table>
     </div>
@@ -409,7 +404,15 @@
         </div>
         <div class="cf-field">
           <div class="cf-label">Durasi (Hari)</div>
-          <input type="number" class="cf-input" id="durasiM" value="1" min="1" oninput="syncFromMobile()">
+          <div class="durasi-mobile-wrap">
+            <button type="button" class="durasi-step" onclick="changeMobileDuration(-1)" aria-label="Kurangi durasi">
+              <i class="fas fa-minus"></i>
+            </button>
+            <input type="text" inputmode="numeric" pattern="[0-9]*" class="cf-input durasi-mobile-input" id="durasiM" value="1" oninput="syncFromMobile(true)" onblur="normalizeMobileDuration()">
+            <button type="button" class="durasi-step" onclick="changeMobileDuration(1)" aria-label="Tambah durasi">
+              <i class="fas fa-plus"></i>
+            </button>
+          </div>
         </div>
       </div>
       <div class="ret-mini">
@@ -559,5 +562,3 @@
 <script src="admin.js"></script>
 </body>
 </html>
-
-

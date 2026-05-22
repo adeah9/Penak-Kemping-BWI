@@ -637,28 +637,23 @@ async function loadOrdersFromSheet(){
 function renderAdminOrders(rows){
   const body=document.getElementById('adminOrdersBody');
   if(!rows || rows.length===0){
-    body.innerHTML='<tr><td colspan="13" class="admin-empty">Belum ada data order.</td></tr>';
+    body.innerHTML='<tr><td colspan="8" class="admin-empty">Belum ada data order.</td></tr>';
     return;
   }
   body.innerHTML=rows.map((r)=>{
     const opts=ORDER_STATUS.map(s=>`<option value="${s}"${s===r.status?' selected':''}>${s}</option>`).join('');
     const noEnc=encodeURIComponent(r.noPesanan||'');
     return `<tr>
-      <td><span class="admin-order-code">${escapeHtml(r.noPesanan||'-')}</span></td>
-      <td>${escapeHtml(r.nama)}</td>
-      <td>${escapeHtml(r.whatsapp)}</td>
-      <td>${escapeHtml(r.jaminan||'-')}</td>
-      <td>${escapeHtml(formatDbDate(r.tanggalAmbil))}</td>
-      <td>${escapeHtml(formatDbDate(r.tanggalKembali))}</td>
-      <td>${escapeHtml(r.durasi)}</td>
-      <td>${escapeHtml(r.daftarItem)}</td>
-      <td>${escapeHtml(r.catatan||'-')}</td>
-      <td>${fmt(Number(r.total)||0)}</td>
-      <td>${escapeHtml(r.waktuOrder)}</td>
-      <td>
+      <td data-label="Nama">${escapeHtml(r.nama)}</td>
+      <td data-label="WhatsApp">${escapeHtml(r.whatsapp)}</td>
+      <td data-label="Tgl Ambil">${escapeHtml(formatDbDate(r.tanggalAmbil))}</td>
+      <td data-label="Durasi">${escapeHtml(r.durasi)} hari</td>
+      <td data-label="Item" class="admin-item-cell">${escapeHtml(r.daftarItem)}</td>
+      <td data-label="Total">${fmt(Number(r.total)||0)}</td>
+      <td data-label="Status">
         <select class="admin-status" onchange="updateOrderStatus(decodeURIComponent('${noEnc}'),this.value)">${opts}</select>
       </td>
-      <td>
+      <td data-label="Aksi">
         <div class="admin-row-actions">
           <button class="admin-mini-btn danger" onclick="deleteOrder(decodeURIComponent('${noEnc}'))">Hapus</button>
         </div>
@@ -689,7 +684,7 @@ async function addManualOrder(){
   const nama=(document.getElementById('admNama').value||'').trim();
   if(!nama){toast('Nama wajib diisi');return}
   const payload={
-    noPesanan:generateAdminOrderNum(),
+    noPesanan:'',
     nama,
     whatsapp:(document.getElementById('admWA').value||'').trim(),
     jaminan:document.getElementById('admJaminan').value||'',

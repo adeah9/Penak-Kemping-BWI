@@ -347,8 +347,8 @@ function restoreOrderDraft(){
         activeTab=data.activeTab;
         const tabBtns=document.querySelectorAll('.tab-nav .tab-btn');
         tabBtns.forEach(btn=>btn.classList.remove('active'));
-        const idx=(activeTab==='catalog')?0:(activeTab==='package')?1:2;
-        if(tabBtns[idx])tabBtns[idx].classList.add('active');
+        const activeBtn=document.querySelector(`.tab-nav .tab-btn[data-tab="${activeTab}"]`);
+        if(activeBtn)activeBtn.classList.add('active');
       }
       if(data.activecat){
         activecat=String(data.activecat);
@@ -417,10 +417,9 @@ function buildCurrentOrderPayload(){
   const catatan=getCatatanPemesan();
   const tgl=document.getElementById('tglPesan').value;
   const dur=parseInt(document.getElementById('durasiSewa').value)||1;
-  const orderNum=currentOrderNum||generateOrderNum();
   const total=cart.reduce((sum,item)=>sum+(item.price*item.qty*dur),0);
   return {
-    noPesanan:orderNum,
+    noPesanan:'',
     nama,
     whatsapp:wa,
     jaminan,
@@ -732,11 +731,39 @@ function hitungKembali(){
 }
 function syncFromMobile(){
   const tgl=document.getElementById('tglPesanM').value;
-  const dur=document.getElementById('durasiM').value;
+  const durRaw=document.getElementById('durasiM').value;
   document.getElementById('tglPesan').value=tgl;
-  document.getElementById('durasiSewa').value=dur;
+  if(String(durRaw).trim()===''){
+    saveOrderDraft();
+    return;
+  }
+  const dur=Math.max(1,parseInt(durRaw,10)||1);
+  document.getElementById('durasiM').value=String(dur);
+  document.getElementById('durasiSewa').value=String(dur);
   hitungTotal();hitungKembali();
   saveOrderDraft();
+}
+function normalizeMobileDuration(){
+  const inp=document.getElementById('durasiM');
+  if(!inp)return;
+  const raw=String(inp.value||'').trim();
+  if(!raw){
+    inp.value='1';
+  }
+  const dur=Math.max(1,parseInt(inp.value,10)||1);
+  inp.value=String(dur);
+  document.getElementById('durasiSewa').value=String(dur);
+  hitungTotal();
+  hitungKembali();
+  saveOrderDraft();
+}
+function changeMobileDuration(delta){
+  const inp=document.getElementById('durasiM');
+  if(!inp)return;
+  const current=Math.max(1,parseInt(inp.value,10)||1);
+  const next=Math.max(1,current+delta);
+  inp.value=String(next);
+  syncFromMobile();
 }
 function setDur(n){
   document.getElementById('durasiSewa').value=n;

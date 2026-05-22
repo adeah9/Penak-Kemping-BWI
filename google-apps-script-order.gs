@@ -3,7 +3,7 @@ const SPREADSHEET_ID_FALLBACK = '1JYywk5ud8KnQDriZaqeyla6Q_K1F4CM2cbdMfRyQHE';
 const SHEET_ORDERS = 'Orders';
 const SHEET_STOCK = 'Stock';
 const ORDER_HEADERS = [
-  'Kode Pesanan',
+  'ID Internal',
   'Nama',
   'WhatsApp',
   'Jaminan',
@@ -333,7 +333,7 @@ function sanitizeWaktuOrderColumn_(sh) {
 }
 
 function isSimpleOrderCode_(value) {
-  return /^PKB-\d{3,}$/i.test(String(value || '').trim());
+  return /^ID-\d{3,}$/i.test(String(value || '').trim());
 }
 
 function normalizeInternalOrderId_(value) {
@@ -351,14 +351,14 @@ function generateInternalOrderId_(sheet) {
     var values = sh.getRange(2, 1, lastRow - 1, 1).getValues();
     values.forEach(function (r) {
       var code = String(r[0] || '').trim().toUpperCase();
-      var match = code.match(/^PKB-(\d+)$/);
+      var match = code.match(/^ID-(\d+)$/);
       if (!match) return;
       var num = Number(match[1]);
       if (num > maxNum) maxNum = num;
     });
   }
   var next = maxNum + 1;
-  return 'PKB-' + String(next).padStart(3, '0');
+  return 'ID-' + String(next).padStart(3, '0');
 }
 
 function sanitizeInternalIdColumn_(sh) {
@@ -371,7 +371,7 @@ function sanitizeInternalIdColumn_(sh) {
   var maxNum = 0;
   values.forEach(function (r) {
     var current = String(r[0] || '').trim().toUpperCase();
-    var match = current.match(/^PKB-(\d+)$/);
+    var match = current.match(/^ID-(\d+)$/);
     if (!match) return;
     var num = Number(match[1]);
     if (!num) return;
@@ -384,7 +384,7 @@ function sanitizeInternalIdColumn_(sh) {
     var normalized = normalizeInternalOrderId_(current);
     if (!normalized) {
       while (used[nextNum]) nextNum++;
-      normalized = 'PKB-' + String(nextNum).padStart(3, '0');
+      normalized = 'ID-' + String(nextNum).padStart(3, '0');
       used[nextNum] = true;
       nextNum++;
     }

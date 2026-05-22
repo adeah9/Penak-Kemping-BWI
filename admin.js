@@ -42,15 +42,20 @@ function updateAdminAuthButton(){
   updateInvoiceDbButton();
 }
 function updateInvoiceDbButton(){
+  const loggedIn=isAdminLoggedIn();
   ['btnDbEntryD','btnDbEntryMobBar','btnDbEntryM'].forEach(id=>{
     const btn=document.getElementById(id);
     if(!btn)return;
-    btn.style.display=isAdminLoggedIn()?'inline-flex':'none';
+    btn.style.display=loggedIn?'inline-flex':'none';
     btn.disabled=false;
     if(!btn.innerHTML.includes('Masuk Database')){
       btn.innerHTML='<i class="fas fa-database"></i> Masuk Database';
     }
   });
+  const mobileOrderBtn=document.getElementById('btnOrderM');
+  if(mobileOrderBtn){
+    mobileOrderBtn.classList.toggle('btn-order-full',!loggedIn);
+  }
 }
 function showAdminPanel(show){
   const panel=document.getElementById('adminPanel');

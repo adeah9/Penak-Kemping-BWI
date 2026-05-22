@@ -418,6 +418,7 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.95);backd
 .cs-footer{padding:12px 18px;border-top:1px solid var(--line-l);position:relative;z-index:15;background:var(--white);box-shadow:0 -8px 18px rgba(255,255,255,0.95);flex-shrink:0}
 .cs-action-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 .cs-action-row .btn-order{margin-top:0;padding:11px 12px;font-size:12px;justify-content:center}
+.cs-action-row .btn-order-full{grid-column:1 / -1}
 .btn-order-db{background:#fff4f6;color:var(--red);border:1px solid #ffd8df;box-shadow:none}
 .btn-order-db:hover{background:#ffeef2;color:var(--red-d);border-color:#ffccd7}
 .btn-order-back{margin-bottom:8px;background:#fff4f6;color:var(--red);border:1px solid #ffd5de;box-shadow:none}

@@ -1,8 +1,8 @@
 // Admin logic (Google Sheet + auth)
 let adminStockLoaded = false;
 let adminOrdersAll = [];
-let adminFilterState = {mode:'date',date:'',month:'',sort:'date_desc'};
-let adminFilterDraft = {mode:'date',date:'',month:'',sort:'date_desc'};
+let adminFilterState = {mode:'all',date:'',month:'',sort:'date_desc'};
+let adminFilterDraft = {mode:'all',date:'',month:'',sort:'date_desc'};
 let adminStockSnapshot = {};
 let pendingStockChanges = {};
 let stockSearchKeyword = '';
@@ -42,7 +42,7 @@ function updateAdminAuthButton(){
   updateInvoiceDbButton();
 }
 function updateInvoiceDbButton(){
-  ['btnDbEntryD','btnDbEntryMobBar'].forEach(id=>{
+  ['btnDbEntryD','btnDbEntryMobBar','btnDbEntryM'].forEach(id=>{
     const btn=document.getElementById(id);
     if(!btn)return;
     btn.style.display=isAdminLoggedIn()?'inline-flex':'none';
@@ -251,16 +251,26 @@ function compareOrderRows(a,b){
 }
 function hasOrderFilter(stateObj){
   const s=stateObj||adminFilterState;
+  if((s.mode||'all')==='all')return false;
   if((s.mode||'date')==='month')return !!s.month;
   return !!s.date;
 }
 function hasAnyAdminFilter(stateObj){return hasOrderFilter(stateObj);}
 function setAdminFilterMode(mode){
-  adminFilterDraft.mode=(mode==='month')?'month':'date';
+  if(mode==='month'){
+    adminFilterDraft.mode='month';
+  }else if(mode==='all'){
+    adminFilterDraft.mode='all';
+  }else{
+    adminFilterDraft.mode='date';
+  }
   if(adminFilterDraft.mode==='date'){
     adminFilterDraft.month='';
+  }else if(adminFilterDraft.mode==='month'){
+    adminFilterDraft.date='';
   }else{
     adminFilterDraft.date='';
+    adminFilterDraft.month='';
   }
   syncAdminFilterInputs();
 }
@@ -291,7 +301,11 @@ function syncAdminFilterInputs(){
     fMonth.style.display=adminFilterDraft.mode==='month'?'block':'none';
   }
   if(sortEl)sortEl.value=adminFilterDraft.sort;
-  if(timeLbl)timeLbl.innerText=adminFilterDraft.mode==='month'?'Filter Bulan':'Filter Tanggal';
+  if(timeLbl){
+    if(adminFilterDraft.mode==='month')timeLbl.innerText='Filter Bulan';
+    else if(adminFilterDraft.mode==='all')timeLbl.innerText='Tanpa Filter Waktu';
+    else timeLbl.innerText='Filter Tanggal';
+  }
 }
 function applyAdminFilters(){
   adminFilterState={...adminFilterDraft};
@@ -333,14 +347,16 @@ function refreshAdminOrderView(){
   updateAdminRecap(filtered);
 }
 function resetAdminFilters(){
-  adminFilterState={mode:'date',date:'',month:'',sort:'date_desc'};
-  adminFilterDraft={mode:'date',date:'',month:'',sort:'date_desc'};
+  adminFilterState={mode:'all',date:'',month:'',sort:'date_desc'};
+  adminFilterDraft={mode:'all',date:'',month:'',sort:'date_desc'};
   syncAdminFilterInputs();
   refreshAdminOrderView();
 }
 function lihatSemuaOrder(){
-  resetAdminFilters();
-  loadOrdersFromSheet();
+  adminFilterDraft.mode='all';
+  adminFilterDraft.date='';
+  adminFilterDraft.month='';
+  applyAdminFilters();
 }
 function updateAdminRecap(filteredRows){
   const orderLabel=document.getElementById('recapOrderLabel');
@@ -790,7 +806,7 @@ async function masukDatabaseOrder(){
   if(cart.length===0){toast('Pilih minimal 1 item terlebih dahulu');return}
 
   lastInvoicePayload=buildCurrentOrderPayload();
-  const buttons=['btnDbEntryD','btnDbEntryMobBar']
+  const buttons=['btnDbEntryD','btnDbEntryMobBar','btnDbEntryM']
     .map(id=>document.getElementById(id))
     .filter(Boolean);
   const oldLabels=buttons.map(btn=>btn.innerHTML);
@@ -856,11 +872,28 @@ async function loadStockMapFromServer(){
 function renderStockRows(currentMap){
   const body=document.getElementById('adminStockBody');
   if(!body)return;
-  const all=[...ITEMS_SATUAN,...ITEMS_PAKET,...ITEMS_PIKNIK];
+  const statusPriority={habis:0,maintenance:1,tersedia:2};
+  const merged=[...ITEMS_SATUAN,...ITEMS_PAKET,...ITEMS_PIKNIK];
+  const itemMap=new Map();
+  merged.forEach(item=>{
+    if(!item || !item.id)return;
+    if(!itemMap.has(item.id)){
+      itemMap.set(item.id,{...item});
+    }
+  });
+  const all=[...itemMap.values()];
   const keyword=(stockSearchKeyword||'').toLowerCase().trim();
-  const visible=all.filter(item=>{
+  let visible=all.filter(item=>{
     if(!keyword)return true;
     return String(item.name||'').toLowerCase().includes(keyword) || String(item.cat||'').toLowerCase().includes(keyword);
+  });
+  visible=visible.sort((a,b)=>{
+    const statusA=(pendingStockChanges[a.id]?.status || currentMap?.[a.id] || 'tersedia').toLowerCase();
+    const statusB=(pendingStockChanges[b.id]?.status || currentMap?.[b.id] || 'tersedia').toLowerCase();
+    const rankA=(statusA in statusPriority)?statusPriority[statusA]:9;
+    const rankB=(statusB in statusPriority)?statusPriority[statusB]:9;
+    if(rankA!==rankB)return rankA-rankB;
+    return String(a.name||'').localeCompare(String(b.name||''),'id',{sensitivity:'base'});
   });
   if(visible.length===0){
     body.innerHTML='<tr><td colspan="3" class="admin-empty">Item tidak ditemukan.</td></tr>';

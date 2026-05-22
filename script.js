@@ -387,7 +387,7 @@ function resetOrderInputsOnReload(){
   setInputValue('adminUsername','');
   setInputValue('adminPassword','');
   setInputValue('adminStockSearch','');
-  setInputValue('adminFilterMode','date');
+  setInputValue('adminFilterMode','all');
   setInputValue('adminFilterDate','');
   setInputValue('adminFilterMonth','');
   setInputValue('adminSortMode','date_desc');

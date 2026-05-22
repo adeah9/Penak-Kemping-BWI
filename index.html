@@ -185,7 +185,6 @@
       </div>
       <div class="admin-head-actions">
         <button class="admin-btn" onclick="loadOrdersFromSheet()">Refresh</button>
-        <button class="admin-btn pri" onclick="lihatSemuaOrder()">Lihat Semua Order</button>
         <button class="admin-btn" onclick="toggleAdminForm()">Input Manual</button>
         <button class="admin-btn pri" onclick="toggleStockPanel()">Stok Item</button>
       </div>
@@ -196,6 +195,7 @@
         <select class="cf-input" id="adminFilterMode" onchange="setAdminFilterMode(this.value)">
           <option value="date">Per Tanggal</option>
           <option value="month">Per Bulan</option>
+          <option value="all">Lihat Semua Order</option>
         </select>
       </div>
       <div class="admin-filter-item">
@@ -432,9 +432,14 @@
       <span class="sum-total-k">Total <span class="sum-total-mini">(x<span id="durInfoMTotal">1</span> hari)</span></span>
       <span class="sum-total-v" id="grandTotalMSheet">Rp 0</span>
     </div>
-    <button class="btn-order" id="btnOrderM" onclick="tampilRingkasan()">
-      <i class="fas fa-receipt"></i> Buat Pesanan
-    </button>
+    <div class="cs-action-row">
+      <button class="btn-order" id="btnOrderM" onclick="tampilRingkasan()">
+        <i class="fas fa-receipt"></i> Buat Pesanan
+      </button>
+      <button class="btn-order btn-order-db" id="btnDbEntryM" onclick="masukDatabaseOrder()">
+        <i class="fas fa-database"></i> Masuk Database
+      </button>
+    </div>
   </div>
 </div>
 

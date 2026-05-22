@@ -38,7 +38,7 @@ function setAdminLoginState(token){
 function updateAdminAuthButton(){
   const b=document.getElementById('adminAuthBtn');
   if(!b)return;
-  b.innerHTML=isAdminLoggedIn()?'<i class="fas fa-right-from-bracket"></i><span>Admin Logout</span>':'<i class="fas fa-user-shield"></i><span>Admin Login</span>';
+  b.innerHTML=isAdminLoggedIn()?'<i class="fas fa-right-from-bracket"></i><span>Admin Logout</span>':'<i class="fas fa-user-shield"></i><span>Login</span>';
   updateInvoiceDbButton();
 }
 function updateInvoiceDbButton(){

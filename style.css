@@ -54,9 +54,8 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.95);backd
 .logo-main{font-size:15px;font-weight:800;color:var(--ink);letter-spacing:-0.01em;line-height:1}
 .logo-sub{font-size:8px;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;color:var(--ink-4);line-height:1}
 .hdr-actions{display:flex;align-items:center;gap:8px}
-.hdr-admin{display:flex;align-items:center;gap:6px;padding:7px 11px;background:var(--white);border:1px solid var(--line);border-radius:var(--r-sm);font-size:11px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:var(--t)}
+.hdr-admin,.hdr-wa{display:flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:7px 13px;background:var(--white);border:1px solid var(--line);border-radius:var(--r-sm);font-size:12px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:var(--t);line-height:1;text-decoration:none}
 .hdr-admin:hover{background:var(--line-l)}
-.hdr-wa{display:flex;align-items:center;gap:6px;padding:7px 13px;background:var(--white);border:1px solid var(--line);border-radius:var(--r-sm);font-size:12px;font-weight:600;color:var(--ink-2);text-decoration:none;transition:var(--t)}
 .hdr-wa:hover{background:var(--line-l)}
 .hdr-wa i{color:#E1306C;font-size:14px}
 
@@ -497,8 +496,7 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.95);backd
   .logo-main{font-size:13px}
   .logo-sub{font-size:7px}
   .hdr-actions{gap:6px}
-  .hdr-admin{padding:6px 9px;font-size:10px}
-  .hdr-wa{padding:6px 10px;font-size:11px}
+  .hdr-admin,.hdr-wa{min-height:32px;padding:6px 11px;font-size:11px}
   .wrap{padding:0 14px 86px}
   .mob-bar{padding:9px 12px;gap:8px}
   .mob-total-amt{font-size:17px}

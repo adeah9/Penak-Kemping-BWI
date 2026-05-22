@@ -505,9 +505,9 @@ function renderKatalog(){
 }
 
 function renderTab(){
-  if(activeTab==='catalog') allItems = ITEMS_SATUAN;
-  else if(activeTab==='package') allItems = ITEMS_PAKET;
-  else allItems = ITEMS_PIKNIK;
+  if(activeTab==='catalog') allItems = [...ITEMS_SATUAN].sort((a,b)=>a.name.localeCompare(b.name,'id',{sensitivity:'base'}));
+  else if(activeTab==='package') allItems = [...ITEMS_PAKET].sort((a,b)=>a.name.localeCompare(b.name,'id',{sensitivity:'base'}));
+  else allItems = [...ITEMS_PIKNIK].sort((a,b)=>a.name.localeCompare(b.name,'id',{sensitivity:'base'}));
   buildCatFilter();
   renderGrid(allItems);
   positionDesktopFooter();

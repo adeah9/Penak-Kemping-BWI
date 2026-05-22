@@ -98,10 +98,33 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.95);backd
 
 /* FILTER */
 .cat-filter{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:16px;position:relative;padding-right:34px}
-.cf-btn{padding:4px 11px;border:1px solid var(--line);background:var(--white);border-radius:99px;font-size:10.5px;font-weight:600;color:var(--ink-3);cursor:pointer;transition:var(--t);white-space:nowrap}
+.cf-btn{
+  padding:4px 11px;
+  border:1px solid var(--line);
+  background:var(--white);
+  border-radius:99px;
+  font-size:10.5px;
+  font-weight:600;
+  color:var(--ink-3);
+  cursor:pointer;
+  white-space:nowrap;
+  transition:opacity .22s var(--ease),transform .22s var(--ease),max-width .22s var(--ease),padding .22s var(--ease),margin .22s var(--ease),border-color .2s var(--ease),background-color .2s var(--ease),color .2s var(--ease);
+  max-width:220px;
+  transform-origin:center;
+}
 .cf-btn:hover{border-color:var(--red);color:var(--red);background:var(--red-mist)}
 .cf-btn.active{border-color:var(--red);color:var(--red);background:var(--red-mist)}
-.cf-row-hidden{display:none!important}
+.cf-row-hidden{
+  opacity:0;
+  transform:translateY(-3px) scale(.98);
+  pointer-events:none;
+  max-width:0;
+  padding-left:0!important;
+  padding-right:0!important;
+  margin:0!important;
+  border-width:0!important;
+  overflow:hidden;
+}
 .cf-toggle-btn{
   position:absolute;
   right:0;
@@ -115,11 +138,13 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.95);backd
   font-size:11px;
   color:rgba(200,16,46,0.78);
   cursor:pointer;
-  transition:var(--t);
+  transition:background-color .2s var(--ease),border-color .2s var(--ease),color .2s var(--ease),transform .22s var(--ease);
   display:inline-flex;
   align-items:center;
   justify-content:center;
 }
+.cf-toggle-btn i{transition:transform .22s var(--ease)}
+.cf-toggle-btn.expanded i{transform:rotate(180deg)}
 .cf-toggle-btn:hover{
   border-color:rgba(200,16,46,0.35);
   background:rgba(200,16,46,0.14);

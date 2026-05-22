@@ -637,6 +637,7 @@ function updateFilterRowsState(){
   const toggle=document.createElement('button');
   toggle.type='button';
   toggle.className='cf-toggle-btn';
+  if(filterExpanded)toggle.classList.add('expanded');
   toggle.setAttribute('aria-label',filterExpanded?'Tampilkan lebih sedikit filter':'Tampilkan filter lainnya');
   toggle.innerHTML=filterExpanded?'<i class="fas fa-chevron-up"></i>':'<i class="fas fa-chevron-down"></i>';
   toggle.onclick=toggleFilterRows;

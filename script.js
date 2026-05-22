@@ -418,7 +418,7 @@ function setSubmitLoading(isLoading){
   const mobileBtn=document.getElementById('btnOrderM');
   if(mobileBtn){
     mobileBtn.disabled=!!isLoading;
-    mobileBtn.innerHTML=isLoading?'<i class="fas fa-spinner fa-spin"></i> Memproses...':'<i class="fas fa-check"></i> Proses';
+    mobileBtn.innerHTML=isLoading?'<i class="fas fa-spinner fa-spin"></i> Memproses...':'<i class="fas fa-receipt"></i> Buat Pesanan';
   }
 }
 function buildCurrentOrderPayload(){

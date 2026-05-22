@@ -368,7 +368,9 @@
   <div class="cs-handle"></div>
   <div class="cs-hdr">
     <div class="cs-title">Pesanan Kamu</div>
-    <button class="cs-close" onclick="closeCartSheet()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="cs-close-wrap">
+    <button class="cs-close" onclick="closeCartSheet()" aria-label="Tutup Pesanan"><i class="fas fa-times"></i></button>
   </div>
   <div class="cs-form">
       <div id="orderNumM" style="display:none"></div>
@@ -431,7 +433,7 @@
       <span class="sum-total-v" id="grandTotalMSheet">Rp 0</span>
     </div>
     <button class="btn-order" id="btnOrderM" onclick="tampilRingkasan()">
-      <i class="fas fa-check"></i> Proses
+      <i class="fas fa-receipt"></i> Buat Pesanan
     </button>
   </div>
 </div>

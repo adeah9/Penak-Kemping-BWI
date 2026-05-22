@@ -617,23 +617,24 @@ function toggleFilterRows(){
 function updateFilterRowsState(){
   const cf=document.getElementById('catFilter');
   if(!cf)return;
+  cf.classList.remove('collapsed','expanded','has-toggle');
   const oldToggle=cf.querySelector('.cf-toggle-btn');
   if(oldToggle)oldToggle.remove();
   const btns=[...cf.querySelectorAll('.cf-btn')];
   if(!btns.length)return;
-  btns.forEach(b=>b.classList.remove('cf-row-hidden'));
-  const rows=[];
-  btns.forEach(b=>{
-    const top=b.offsetTop;
-    if(!rows.includes(top))rows.push(top);
-  });
-  if(rows.length<=2)return;
-  if(!filterExpanded){
-    btns.forEach(b=>{
-      const rowIndex=rows.indexOf(b.offsetTop);
-      if(rowIndex>=2)b.classList.add('cf-row-hidden');
-    });
+  const rows=[...new Set(btns.map(b=>b.offsetTop))];
+  if(rows.length<=2){
+    cf.style.maxHeight='none';
+    return;
   }
+  const secondRowTop=rows[1];
+  const secondRowBtns=btns.filter(b=>b.offsetTop===secondRowTop);
+  const secondRowHeight=secondRowBtns.length?Math.max(...secondRowBtns.map(b=>b.offsetHeight)):26;
+  const collapsedHeight=secondRowTop+secondRowHeight+2;
+  cf.style.setProperty('--cf-collapsed-h',`${collapsedHeight}px`);
+  cf.classList.add('has-toggle');
+  cf.classList.add(filterExpanded?'expanded':'collapsed');
+  cf.style.maxHeight=filterExpanded?`${cf.scrollHeight+6}px`:`${collapsedHeight}px`;
   const toggle=document.createElement('button');
   toggle.type='button';
   toggle.className='cf-toggle-btn';

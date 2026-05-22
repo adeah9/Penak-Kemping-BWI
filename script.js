@@ -1,4 +1,4 @@
-// Compatibility shim for cached inline handlers from older HTML versions.
+﻿// Compatibility shim for cached inline handlers from older HTML versions.
 window.loginAdminIn_ = function () {
   if (typeof window.submitAdminLogin === 'function') {
     return window.submitAdminLogin();
@@ -13,161 +13,217 @@ window.loginAdminin_ = window.loginAdminIn_;
 window.loginAdminin = window.loginAdminIn_;
 
 // --- DATA ---
+
 const ITEMS_SATUAN = [
-  {id:'s1',name:'Tenda 2 Layer 2P Quechua MH100',price:30000,cat:'Tenda'},
-  {id:'s2',name:'Tenda 2 Layer 3-4P Wildshell Rote',price:35000,cat:'Tenda'},
-  {id:'s3',name:'Tenda 2 Layer 4-5P Tendaki Borneo Black',price:40000,cat:'Tenda'},
-  {id:'s4',name:'Tenda 2 Layer 4-5P Tendaki Borneo Brown',price:40000,cat:'Tenda'},
-  {id:'s5',name:'Tenda 2 Layer 4-5P Tendaki Borneo White Pro',price:40000,cat:'Tenda'},
-  {id:'s6',name:'Tenda 2 Layer 4-5P Tendaki Borneo Black Pro',price:40000,cat:'Tenda'},
-  {id:'s7',name:'Carrier Toba 60L',price:25000,cat:'Carrier / Tas'},
-  {id:'s8',name:'Carrier Sigma AG 60L',price:25000,cat:'Carrier / Tas'},
-  {id:'s9',name:'Carrier Python 60L',price:25000,cat:'Carrier / Tas'},
-  {id:'s10',name:'Carrier Horus 40L',price:20000,cat:'Carrier / Tas'},
-  {id:'s11',name:'Carrier Bunglon 45L',price:20000,cat:'Carrier / Tas'},
-  {id:'s12',name:'Carrier Alpine 48L',price:20000,cat:'Carrier / Tas'},
-  {id:'s13',name:'Semi Carrier Taipan 25L',price:20000,cat:'Carrier / Tas'},
-  {id:'s14',name:'Hydropack Speed Trail',price:15000,cat:'Hydropack / Daypack'},
-  {id:'s15',name:'Hydropack Vertical Trail',price:20000,cat:'Hydropack / Daypack'},
-  {id:'s16',name:'Hydropack Zoya',price:15000,cat:'Hydropack / Daypack'},
-  {id:'s17',name:'Hydropack Penak',price:15000,cat:'Hydropack / Daypack'},
-  {id:'s18',name:'Hydropack Noma',price:20000,cat:'Hydropack / Daypack'},
-  {id:'s19',name:'Hydropack Alpha',price:15000,cat:'Hydropack / Daypack',desc:'Range Rp15.000 - Rp20.000/hari'},
-  {id:'s20',name:'Hydropack Quebec',price:20000,cat:'Hydropack / Daypack'},
-  {id:'s21',name:'Hydropack Kilimanjaro',price:15000,cat:'Hydropack / Daypack'},
-  {id:'s22',name:'Daypack Quechua',price:10000,cat:'Hydropack / Daypack'},
-  {id:'s23',name:'Daypack Mochila',price:15000,cat:'Hydropack / Daypack'},
-  {id:'s24',name:'Daypack Antarestar',price:15000,cat:'Hydropack / Daypack'},
-  {id:'s25',name:'Daypack Aka Adventure',price:15000,cat:'Hydropack / Daypack'},
-  {id:'s26',name:'Daypack Sapala',price:15000,cat:'Hydropack / Daypack'},
-  {id:'s27',name:'Gorpcore Credifox',price:15000,cat:'Jaket / Gorpcore'},
-  {id:'s28',name:'Credifox Reflective',price:15000,cat:'Jaket / Gorpcore'},
-  {id:'s29',name:'Gorpcore Bogaboo',price:20000,cat:'Jaket / Gorpcore'},
-  {id:'s30',name:'Gorpcore Carumby',price:20000,cat:'Jaket / Gorpcore'},
-  {id:'s31',name:'Gorpcore Had',price:15000,cat:'Jaket / Gorpcore',desc:'Range Rp15.000 - Rp20.000/hari'},
-  {id:'s32',name:'Gorpcore Jirion',price:15000,cat:'Jaket / Gorpcore'},
-  {id:'s33',name:'Gorpcore Kilimanjaro',price:20000,cat:'Jaket / Gorpcore'},
-  {id:'s34',name:'Gorpcore Fearless',price:15000,cat:'Jaket / Gorpcore'},
-  {id:'s35',name:'Gorpcore Wallhike',price:15000,cat:'Jaket / Gorpcore'},
-  {id:'s36',name:'Gorpcore Polos',price:10000,cat:'Jaket / Gorpcore'},
-  {id:'s37',name:'Puffer Penak',price:15000,cat:'Jaket / Gorpcore',desc:'Range Rp15.000 - Rp20.000/hari'},
-  {id:'s38',name:'Puffer Quiksilver',price:15000,cat:'Jaket / Gorpcore'},
-  {id:'s39',name:'Baselayer Wanita',price:10000,cat:'Baselayer'},
-  {id:'s40',name:'Baselayer Pria Maniac',price:15000,cat:'Baselayer'},
-  {id:'s41',name:'Baselayer Pria Monte',price:15000,cat:'Baselayer'},
-  {id:'s42',name:'Baselayer Pria Credifox',price:15000,cat:'Baselayer'},
-  {id:'s43',name:'Baselayer Pria Sapala',price:15000,cat:'Baselayer'},
-  {id:'s44',name:'Celana Cargo Parasut',price:15000,cat:'Celana'},
-  {id:'s45',name:'Cargo Hextstudio',price:15000,cat:'Celana'},
-  {id:'s46',name:'Cargo Turtle',price:15000,cat:'Celana'},
-  {id:'s47',name:'Cargo Freedo',price:15000,cat:'Celana'},
-  {id:'s48',name:'Cargo Baggy Seeking',price:15000,cat:'Celana'},
-  {id:'s49',name:'Celana Credifox',price:15000,cat:'Celana'},
-  {id:'s50',name:'UPS Reflective',price:15000,cat:'Celana'},
-  {id:'s51',name:'Kupluk Arc’',price:8000,cat:'Topi / Kupluk'},
-  {id:'s52',name:'Kupluk Bintang',price:5000,cat:'Topi / Kupluk'},
-  {id:'s53',name:'Kupluk Penak',price:5000,cat:'Topi / Kupluk'},
-  {id:'s54',name:'Kupluk Spiderman',price:5000,cat:'Topi / Kupluk'},
-  {id:'s55',name:'Topi Kalcer',price:5000,cat:'Topi / Kupluk'},
-  {id:'s56',name:'Topi Forclaz',price:5000,cat:'Topi / Kupluk'},
-  {id:'s57',name:'Topi Rimba Credifox',price:5000,cat:'Topi / Kupluk'},
-  {id:'s58',name:'Topi Rimba Avtech',price:5000,cat:'Topi / Kupluk'},
-  {id:'s59',name:'Topi Rimba Humblezing',price:15000,cat:'Topi / Kupluk'},
-  {id:'s60',name:'Rubtrack',price:15000,cat:'Sepatu Gunung'},
-  {id:'s61',name:'Hitec',price:15000,cat:'Sepatu Gunung'},
-  {id:'s62',name:'Lavio',price:15000,cat:'Sepatu Gunung'},
-  {id:'s63',name:'Black Yak',price:15000,cat:'Sepatu Gunung'},
-  {id:'s64',name:'Treksta',price:15000,cat:'Sepatu Gunung'},
-  {id:'s65',name:'Nepa',price:15000,cat:'Sepatu Gunung'},
-  {id:'s66',name:'Spotec',price:15000,cat:'Sepatu Gunung'},
-  {id:'s67',name:'Aerostreet',price:15000,cat:'Sepatu Gunung'},
-  {id:'s68',name:'Ardiles',price:15000,cat:'Sepatu Gunung'},
-  {id:'s69',name:'Leedo',price:15000,cat:'Sepatu Gunung'},
-  {id:'s70',name:'Caiday',price:15000,cat:'Sepatu Gunung'},
-  {id:'s71',name:'Lafuma',price:15000,cat:'Sepatu Gunung'},
-  {id:'s72',name:'Lotto',price:15000,cat:'Sepatu Gunung'},
-  {id:'s73',name:'Skechers Trail',price:15000,cat:'Sepatu Gunung'},
-  {id:'s74',name:'The Red Face',price:15000,cat:'Sepatu Gunung'},
-  {id:'s75',name:'The North Face',price:15000,cat:'Sepatu Gunung'},
-  {id:'s76',name:'Keen',price:15000,cat:'Sepatu Gunung'},
-  {id:'s77',name:'Broadstone',price:15000,cat:'Sepatu Gunung'},
-  {id:'s78',name:'Leisure High',price:15000,cat:'Sepatu Gunung'},
-  {id:'s79',name:'Trekking Pole Lipat',price:5000,cat:'Aksesoris Pendakian'},
-  {id:'s80',name:'Trekking Pole Jepit',price:10000,cat:'Aksesoris Pendakian'},
-  {id:'s81',name:'Trekking Pole Forclaz',price:10000,cat:'Aksesoris Pendakian'},
-  {id:'s82',name:'Headlamp Pendakian',price:5000,cat:'Aksesoris Pendakian'},
-  {id:'s83',name:'Kacamata',price:5000,cat:'Aksesoris Pendakian'},
-  {id:'s84',name:'Sarung Tangan Polar',price:5000,cat:'Aksesoris Pendakian'},
-  {id:'s85',name:'Masker Gas Respirator',price:10000,cat:'Aksesoris Pendakian'},
-  {id:'s86',name:'Sleeping Bag',price:10000,cat:'Perlengkapan Camping'},
-  {id:'s87',name:'Matras Foam',price:10000,cat:'Perlengkapan Camping'},
-  {id:'s88',name:'Matras Tidur Gulung',price:10000,cat:'Perlengkapan Camping'},
-  {id:'s89',name:'Kursi Lipat',price:10000,cat:'Perlengkapan Camping'},
-  {id:'s90',name:'Kursi Lipat Jumbo',price:15000,cat:'Perlengkapan Camping'},
-  {id:'s91',name:'Kursi Lipat Glamping',price:20000,cat:'Perlengkapan Camping'},
-  {id:'s92',name:'Meja Lipat Aluminium',price:15000,cat:'Perlengkapan Camping'},
-  {id:'s93',name:'Meja Lipat Kain',price:10000,cat:'Perlengkapan Camping'},
-  {id:'s94',name:'Lampu Tenda',price:4000,cat:'Perlengkapan Camping',desc:'Range Rp4.000 - Rp8.000/hari'},
-  {id:'s95',name:'Flysheet 2x3',price:10000,cat:'Perlengkapan Camping'},
-  {id:'s96',name:'Flysheet 4x5',price:15000,cat:'Perlengkapan Camping'},
-  {id:'s97',name:'Tiang Flysheet',price:10000,cat:'Perlengkapan Camping'},
-  {id:'s98',name:'Powerbank 10.000mAh',price:10000,cat:'Perlengkapan Camping'},
-  {id:'s99',name:'Kompor Koper',price:15000,cat:'Peralatan Masak'},
-  {id:'s100',name:'Kompor Bulat',price:10000,cat:'Peralatan Masak'},
-  {id:'s101',name:'Nesting / Panci',price:5000,cat:'Peralatan Masak'},
-  {id:'s102',name:'Grill Pan Kotak',price:10000,cat:'Peralatan Masak'},
-  {id:'s103',name:'Grill Pan Bulat',price:10000,cat:'Peralatan Masak'},
-  {id:'s104',name:'Tea Set Picnic',price:10000,cat:'Peralatan Masak'},
-  {id:'s105',name:'Teko Kemping',price:5000,cat:'Peralatan Masak'},
-  {id:'s106',name:'Cangkir Mini',price:2000,cat:'Peralatan Masak'},
-  {id:'s107',name:'Piring Satuan',price:2000,cat:'Peralatan Masak'},
-  {id:'s108',name:'Mangkok Sambal',price:2000,cat:'Peralatan Masak'},
-  {id:'s109',name:'Water Tank 5L',price:5000,cat:'Peralatan Masak'},
-  {id:'s110',name:'Torch Gas',price:5000,cat:'Peralatan Masak'},
-  {id:'s111',name:'Gas Portable',price:7000,cat:'Peralatan Masak',desc:'Rp7.000/pcs'},
-  {id:'s112',name:'Sumpit Aluminium',price:2000,cat:'Peralatan Masak'},
-  {id:'s113',name:'Kuas Grill',price:2000,cat:'Peralatan Masak'},
-  {id:'s114',name:'Sendok Pisau 3in1',price:3000,cat:'Peralatan Masak'},
-  {id:'s115',name:'Capitan Grill',price:3000,cat:'Peralatan Masak'},
-  {id:'s116',name:'Keranjang Besar',price:15000,cat:'Piknik'},
-  {id:'s117',name:'Keranjang Kecil',price:10000,cat:'Piknik'},
-  {id:'s118',name:'Keranjang Snack',price:2000,cat:'Piknik'},
-  {id:'s119',name:'Tas Eceng Gondok',price:10000,cat:'Piknik'},
-  {id:'s120',name:'Alas Waterproof',price:5000,cat:'Piknik',desc:'Range Rp5.000 - Rp15.000/hari'},
-  {id:'s121',name:'Alas Kanvas Polos',price:10000,cat:'Piknik'},
-  {id:'s122',name:'Alas Kotak',price:10000,cat:'Piknik'},
-  {id:'s123',name:'Kamera Analog',price:5000,cat:'Piknik'},
-  {id:'s124',name:'Koran Vintage',price:3000,cat:'Piknik'},
-  {id:'s125',name:'Majalah Palsu',price:3000,cat:'Piknik'},
-  {id:'s126',name:'Buku Bacaan Asli',price:5000,cat:'Piknik'},
-  {id:'s127',name:'Bunga Palsu',price:5000,cat:'Piknik'},
-  {id:'s128',name:'Bunga Tulip',price:5000,cat:'Piknik'},
-  {id:'s129',name:'Bunga Edelweis',price:5000,cat:'Piknik'},
-  {id:'s130',name:'Cermin Oval',price:5000,cat:'Piknik'},
-  {id:'s131',name:'Cermin Love',price:5000,cat:'Piknik'},
-  {id:'s132',name:'Piring Kayu',price:2000,cat:'Piknik'},
-  {id:'s133',name:'Gelas Kayu',price:2000,cat:'Piknik'},
-  {id:'s134',name:'Tatakan Gelas',price:2000,cat:'Piknik'},
-  {id:'s135',name:'Payung Aesthetic',price:5000,cat:'Piknik'}
+  {id:'i001',name:'Tenda 2 Layer 4-5P Tendaki Borneo Black',price:40000,cat:'Tenda',desc:'Kapasitas 4-5 orang'},
+  {id:'i002',name:'Tenda 2 Layer 4-5P Tendaki Borneo Brown',price:40000,cat:'Tenda',desc:'Kapasitas 4-5 orang'},
+  {id:'i003',name:'Tenda 2 Layer 4-5P Tendaki Borneo White Pro',price:40000,cat:'Tenda',desc:'Kapasitas 4-5 orang'},
+  {id:'i004',name:'Tenda 2 Layer 4-5P Tendaki Borneo Black Pro',price:40000,cat:'Tenda',desc:'Kapasitas 4-5 orang'},
+  {id:'i005',name:'Tenda 2 Layer 3-4P Wildshell Rote',price:35000,cat:'Tenda',desc:'Kapasitas 3-4 orang'},
+  {id:'i006',name:'Tenda 2 Layer 2P Quechua MH100',price:30000,cat:'Tenda',desc:'Kapasitas 2 orang'},
+
+  {id:'i007',name:'Carrier Toba 60L',price:25000,cat:'Carrier / Tas',desc:'Keril Arei Toba 60L'},
+  {id:'i008',name:'Carrier Sigma AG 60L',price:25000,cat:'Carrier / Tas',desc:'Keril Monte Sigma AG Pro 60L'},
+  {id:'i009',name:'Carrier Python 60L',price:25000,cat:'Carrier / Tas',desc:'Keril Reptil Python 60L'},
+  {id:'i010',name:'Carrier Horus 40L',price:20000,cat:'Carrier / Tas',desc:'Keril Zarventure Horus 40L'},
+  {id:'i011',name:'Carrier Bunglon 45L',price:20000,cat:'Carrier / Tas',desc:'Keril Reptil Bunglon 45L'},
+  {id:'i012',name:'Carrier Alpine 48L',price:20000,cat:'Carrier / Tas',desc:'Keril Monte Alpine Trail Red 48L'},
+  {id:'i013',name:'Semi Carrier Taipan 25L',price:20000,cat:'Carrier / Tas',desc:'Semi keril kapasitas 25L'},
+
+  {id:'i014',name:'Hydropack Speed Trail 12L',price:15000,cat:'Hydropack / Daypack',desc:'Kapasitas 12L'},
+  {id:'i015',name:'Hydropack Vertical Trail 12L',price:20000,cat:'Hydropack / Daypack',desc:'Kapasitas 12L'},
+  {id:'i016',name:'Hydropack Zoya 10L',price:15000,cat:'Hydropack / Daypack',desc:'Kapasitas 10L'},
+  {id:'i017',name:'Hydropack Penak Black 10L',price:15000,cat:'Hydropack / Daypack',desc:'Kapasitas 10L'},
+  {id:'i018',name:'Hydropack Noma White 10L',price:20000,cat:'Hydropack / Daypack',desc:'Kapasitas 10L'},
+  {id:'i019',name:'Hydropack Arvensis Grey 10L',price:20000,cat:'Hydropack / Daypack',desc:'Kapasitas 10L'},
+  {id:'i020',name:'Hydropack Wildshell Evo White 10L',price:20000,cat:'Hydropack / Daypack',desc:'Kapasitas 10L'},
+  {id:'i021',name:'Hydropack Wildshell Evo Pink 10L',price:20000,cat:'Hydropack / Daypack',desc:'Kapasitas 10L'},
+  {id:'i022',name:'Hydropack Quebec Consina 10L',price:20000,cat:'Hydropack / Daypack',desc:'Kapasitas 10L'},
+  {id:'i023',name:'Hydropack Alpha Black 10L',price:15000,cat:'Hydropack / Daypack',desc:'Kapasitas 10L'},
+  {id:'i024',name:'Hydropack Alpha White 10L',price:20000,cat:'Hydropack / Daypack',desc:'Kapasitas 10L'},
+  {id:'i025',name:'Hydropack Kilimanjaro Grey 10L',price:15000,cat:'Hydropack / Daypack',desc:'Kapasitas 10L'},
+  {id:'i026',name:'Daypack Quechua 10L',price:10000,cat:'Hydropack / Daypack',desc:'Kapasitas 7L-10L'},
+  {id:'i027',name:'Daypack Mochila',price:15000,cat:'Hydropack / Daypack',desc:''},
+  {id:'i028',name:'Daypack Antarestar',price:15000,cat:'Hydropack / Daypack',desc:''},
+  {id:'i029',name:'Daypack Aka Adventure Grey 18L',price:15000,cat:'Hydropack / Daypack',desc:'Grey 18L'},
+  {id:'i030',name:'Daypack Sapala no Mi Pink 15L',price:15000,cat:'Hydropack / Daypack',desc:'Pink 15L'},
+
+  {id:'i031',name:'Gorpcore Credifox',price:15000,cat:'Jaket / Gorpcore',desc:'Ukuran S sampai XXL'},
+  {id:'i032',name:'Credifox Reflective',price:15000,cat:'Jaket / Gorpcore',desc:'Reflective hitam'},
+  {id:'i033',name:'Gorpcore Kilimanjaro',price:20000,cat:'Jaket / Gorpcore',desc:''},
+  {id:'i034',name:'Gorpcore Jirion',price:15000,cat:'Jaket / Gorpcore',desc:''},
+  {id:'i035',name:'Gorpcore Carumby',price:20000,cat:'Jaket / Gorpcore',desc:''},
+  {id:'i036',name:'Gorpcore Bogaboo',price:20000,cat:'Jaket / Gorpcore',desc:''},
+  {id:'i037',name:'Gorpcore Had',price:20000,cat:'Jaket / Gorpcore',desc:'Rentang harga 15.000 - 20.000/hari'},
+  {id:'i038',name:'Gorpcore Wallhike',price:15000,cat:'Jaket / Gorpcore',desc:''},
+  {id:'i039',name:'Gorpcore Fearless',price:15000,cat:'Jaket / Gorpcore',desc:''},
+  {id:'i040',name:'Gorpcore Polos',price:10000,cat:'Jaket / Gorpcore',desc:''},
+  {id:'i041',name:'Puffer Penak',price:20000,cat:'Jaket / Gorpcore',desc:'Rentang harga 15.000 - 20.000/hari'},
+  {id:'i042',name:'Puffer Quiksilver',price:15000,cat:'Jaket / Gorpcore',desc:''},
+
+  {id:'i043',name:'Baselayer Wanita',price:10000,cat:'Baselayer',desc:''},
+  {id:'i044',name:'Baselayer Pria Maniac',price:15000,cat:'Baselayer',desc:''},
+  {id:'i045',name:'Baselayer Pria Monte',price:15000,cat:'Baselayer',desc:''},
+  {id:'i046',name:'Baselayer Pria Credifox',price:15000,cat:'Baselayer',desc:''},
+  {id:'i047',name:'Baselayer Pria Sapala',price:15000,cat:'Baselayer',desc:''},
+
+  {id:'i048',name:'Celana Cargo Parasut',price:15000,cat:'Celana',desc:''},
+  {id:'i049',name:'Cargo Hextstudio',price:15000,cat:'Celana',desc:''},
+  {id:'i050',name:'Cargo Turtle Sage',price:15000,cat:'Celana',desc:''},
+  {id:'i051',name:'Cargo Freedo Camo',price:15000,cat:'Celana',desc:''},
+  {id:'i052',name:'Cargo Baggy Seeking Leopard',price:15000,cat:'Celana',desc:''},
+  {id:'i053',name:'UPS Reflective Camo',price:15000,cat:'Celana',desc:''},
+  {id:'i054',name:'Celana Credifox',price:15000,cat:'Celana',desc:''},
+
+  {id:'i055',name:'Kupluk Arc’',price:8000,cat:'Topi / Kupluk',desc:''},
+  {id:'i056',name:'Kupluk Bintang',price:5000,cat:'Topi / Kupluk',desc:''},
+  {id:'i057',name:'Kupluk Penak Kemping',price:5000,cat:'Topi / Kupluk',desc:''},
+  {id:'i058',name:'Kupluk Spiderman',price:5000,cat:'Topi / Kupluk',desc:''},
+  {id:'i059',name:'Topi Kalcer',price:5000,cat:'Topi / Kupluk',desc:''},
+  {id:'i060',name:'Topi Forclaz',price:5000,cat:'Topi / Kupluk',desc:''},
+  {id:'i061',name:'Topi Rimba Credifox',price:5000,cat:'Topi / Kupluk',desc:''},
+  {id:'i062',name:'Topi Rimba Avtech',price:5000,cat:'Topi / Kupluk',desc:''},
+  {id:'i063',name:'Topi Rimba Humblezing',price:15000,cat:'Topi / Kupluk',desc:''},
+
+  {id:'i064',name:'Rubtrack Low / High',price:15000,cat:'Sepatu Gunung',desc:''},
+  {id:'i065',name:'Hitec High',price:15000,cat:'Sepatu Gunung',desc:''},
+  {id:'i066',name:'Lavio High',price:15000,cat:'Sepatu Gunung',desc:''},
+  {id:'i067',name:'Black Yak High / Low',price:15000,cat:'Sepatu Gunung',desc:''},
+  {id:'i068',name:'Treksta High',price:15000,cat:'Sepatu Gunung',desc:''},
+  {id:'i069',name:'Nepa High',price:15000,cat:'Sepatu Gunung',desc:''},
+  {id:'i070',name:'Spotec High / Low',price:15000,cat:'Sepatu Gunung',desc:''},
+  {id:'i071',name:'Aero Low',price:15000,cat:'Sepatu Gunung',desc:''},
+  {id:'i072',name:'Aerostreet Low / High',price:15000,cat:'Sepatu Gunung',desc:''},
+  {id:'i073',name:'Ardiles Low',price:15000,cat:'Sepatu Gunung',desc:''},
+  {id:'i074',name:'Lotto Low',price:15000,cat:'Sepatu Gunung',desc:''},
+  {id:'i075',name:'Skechers Trail',price:15000,cat:'Sepatu Gunung',desc:''},
+  {id:'i076',name:'Lafuma Low',price:15000,cat:'Sepatu Gunung',desc:''},
+  {id:'i077',name:'The Red Face High',price:15000,cat:'Sepatu Gunung',desc:''},
+  {id:'i078',name:'The North Face High',price:15000,cat:'Sepatu Gunung',desc:''},
+  {id:'i079',name:'Leedo Low',price:15000,cat:'Sepatu Gunung',desc:''},
+  {id:'i080',name:'Caiday Low',price:15000,cat:'Sepatu Gunung',desc:''},
+  {id:'i081',name:'Keen Low',price:15000,cat:'Sepatu Gunung',desc:''},
+  {id:'i082',name:'Broadstone Low',price:15000,cat:'Sepatu Gunung',desc:''},
+  {id:'i083',name:'Leisure High',price:15000,cat:'Sepatu Gunung',desc:''},
+
+  {id:'i084',name:'Trekking Pole Lipat',price:5000,cat:'Aksesoris Pendakian',desc:''},
+  {id:'i085',name:'Trekking Pole Seekday Yellow',price:15000,cat:'Aksesoris Pendakian',desc:''},
+  {id:'i086',name:'Trekking Pole Jepit',price:10000,cat:'Aksesoris Pendakian',desc:''},
+  {id:'i087',name:'Trekking Pole Forclaz',price:10000,cat:'Aksesoris Pendakian',desc:''},
+  {id:'i088',name:'Headlamp Pendakian',price:5000,cat:'Aksesoris Pendakian',desc:''},
+  {id:'i089',name:'Kacamata Hiking',price:5000,cat:'Aksesoris Pendakian',desc:''},
+  {id:'i090',name:'Sarung Tangan Polar',price:5000,cat:'Aksesoris Pendakian',desc:''},
+  {id:'i091',name:'Masker Gas Respirator',price:10000,cat:'Aksesoris Pendakian',desc:''},
+
+  {id:'i092',name:'Sleeping Bag',price:10000,cat:'Perlengkapan Camping',desc:''},
+  {id:'i093',name:'Matras Foam',price:10000,cat:'Perlengkapan Camping',desc:''},
+  {id:'i094',name:'Matras Tidur Gulung',price:10000,cat:'Perlengkapan Camping',desc:''},
+  {id:'i095',name:'Kursi Lipat',price:10000,cat:'Perlengkapan Camping',desc:''},
+  {id:'i096',name:'Kursi Lipat Jumbo',price:15000,cat:'Perlengkapan Camping',desc:''},
+  {id:'i097',name:'Kursi Lipat Glamping',price:20000,cat:'Perlengkapan Camping',desc:''},
+  {id:'i098',name:'Meja Box Glamping',price:15000,cat:'Perlengkapan Camping',desc:''},
+  {id:'i099',name:'Meja Lipat Aluminium',price:15000,cat:'Perlengkapan Camping',desc:''},
+  {id:'i100',name:'Meja Lipat Kain',price:10000,cat:'Perlengkapan Camping',desc:''},
+  {id:'i101',name:'Lampu Tenda Baterai',price:4000,cat:'Perlengkapan Camping',desc:''},
+  {id:'i102',name:'Lampu Tenda Cas',price:8000,cat:'Perlengkapan Camping',desc:''},
+  {id:'i103',name:'Flysheet 2x3',price:10000,cat:'Perlengkapan Camping',desc:''},
+  {id:'i104',name:'Flysheet 4x5',price:15000,cat:'Perlengkapan Camping',desc:''},
+  {id:'i105',name:'Tiang Flysheet',price:10000,cat:'Perlengkapan Camping',desc:''},
+  {id:'i106',name:'Powerbank 10.000mAh',price:10000,cat:'Perlengkapan Camping',desc:''},
+
+  {id:'i107',name:'Kompor Koper',price:15000,cat:'Peralatan Masak',desc:''},
+  {id:'i108',name:'Kompor Bulat Windproof',price:10000,cat:'Peralatan Masak',desc:''},
+  {id:'i109',name:'Gas Portable',price:7000,cat:'Peralatan Masak',desc:'per pcs'},
+  {id:'i110',name:'Nesting / Panci',price:5000,cat:'Peralatan Masak',desc:''},
+  {id:'i111',name:'Grill Pan Kotak',price:10000,cat:'Peralatan Masak',desc:''},
+  {id:'i112',name:'Grill Pan Bulat',price:10000,cat:'Peralatan Masak',desc:''},
+  {id:'i113',name:'Tea Set Picnic',price:10000,cat:'Peralatan Masak',desc:''},
+  {id:'i114',name:'Teko Kemping',price:5000,cat:'Peralatan Masak',desc:''},
+  {id:'i115',name:'Cangkir Mini',price:2000,cat:'Peralatan Masak',desc:''},
+  {id:'i116',name:'Piring Plastik',price:2000,cat:'Peralatan Masak',desc:''},
+  {id:'i117',name:'Mangkok Sambal',price:2000,cat:'Peralatan Masak',desc:''},
+  {id:'i118',name:'Water Tank 5L',price:5000,cat:'Peralatan Masak',desc:''},
+  {id:'i119',name:'Torch Gas',price:5000,cat:'Peralatan Masak',desc:''},
+  {id:'i120',name:'Tripod HP / Kamera',price:10000,cat:'Peralatan Masak',desc:''},
+  {id:'i121',name:'Tripod Mini',price:5000,cat:'Peralatan Masak',desc:''},
+  {id:'i122',name:'Lensa Apexel + Tripod',price:15000,cat:'Peralatan Masak',desc:''},
+  {id:'i123',name:'Sumpit Aluminium',price:2000,cat:'Peralatan Masak',desc:''},
+  {id:'i124',name:'Kuas Grill',price:2000,cat:'Peralatan Masak',desc:''},
+  {id:'i125',name:'Sendok Pisau 3in1',price:3000,cat:'Peralatan Masak',desc:''},
+  {id:'i126',name:'Capitan Grill',price:3000,cat:'Peralatan Masak',desc:''},
+
+  {id:'i127',name:'Keranjang Besar',price:15000,cat:'Piknik',desc:''},
+  {id:'i128',name:'Keranjang Kecil',price:10000,cat:'Piknik',desc:''},
+  {id:'i129',name:'Keranjang Snack',price:2000,cat:'Piknik',desc:''},
+  {id:'i130',name:'Tas Eceng Gondok',price:10000,cat:'Piknik',desc:''},
+  {id:'i131',name:'Alas Waterproof',price:15000,cat:'Piknik',desc:'Rentang harga 5.000 - 15.000/hari'},
+  {id:'i132',name:'Alas Kanvas Polos',price:10000,cat:'Piknik',desc:''},
+  {id:'i133',name:'Alas Kotak',price:10000,cat:'Piknik',desc:''},
+  {id:'i134',name:'Kamera Analog',price:5000,cat:'Piknik',desc:''},
+  {id:'i135',name:'Koran Vintage',price:3000,cat:'Piknik',desc:''},
+  {id:'i136',name:'Majalah Palsu',price:3000,cat:'Piknik',desc:''},
+  {id:'i137',name:'Buku Bacaan Asli',price:5000,cat:'Piknik',desc:''},
+  {id:'i138',name:'Bunga Palsu',price:5000,cat:'Piknik',desc:''},
+  {id:'i139',name:'Bunga Tulip',price:5000,cat:'Piknik',desc:''},
+  {id:'i140',name:'Bunga Edelweis',price:5000,cat:'Piknik',desc:''},
+  {id:'i141',name:'Cermin Oval',price:5000,cat:'Piknik',desc:''},
+  {id:'i142',name:'Cermin Love',price:5000,cat:'Piknik',desc:''},
+  {id:'i143',name:'Piring Kayu',price:2000,cat:'Piknik',desc:''},
+  {id:'i144',name:'Alat Makan Kayu',price:2000,cat:'Piknik',desc:''},
+  {id:'i145',name:'Gelas Kayu',price:2000,cat:'Piknik',desc:''},
+  {id:'i146',name:'Tatakan Gelas',price:2000,cat:'Piknik',desc:''},
+  {id:'i147',name:'Payung Aesthetic',price:5000,cat:'Piknik',desc:''}
 ];
 
 const ITEMS_PAKET = [
-  {id:'p1',name:'Kemping Ceria 1',price:85000,cat:'Paket Kemping',desc:'Tenda 4-5P, Kompor + Gas + Nesting, Matras Tidur 2 pcs, Sleeping Bag 2 pcs, Headlamp 2 pcs'},
-  {id:'p2',name:'Kemping Ceria 2',price:110000,cat:'Paket Kemping',desc:'Tenda 4-5P, Kompor + Gas + Nesting, Matras Tidur 2 pcs, Sleeping Bag 2 pcs, Headlamp 2 pcs, Kursi Lipat 2 pcs, Meja Kain 1 pcs'},
-  {id:'p3',name:'Kemping Ceria 3',price:130000,cat:'Paket Kemping',desc:'Tenda 4-5P, Kompor + Gas + Nesting, Matras Tidur 2 pcs, Keril 60L, Sleeping Bag 2 pcs, Headlamp 2 pcs, Kursi Lipat 2 pcs, Meja Kain, Lampu Tenda'},
-  {id:'p4',name:'Kemping Rame2',price:250000,cat:'Paket Kemping',desc:'Tenda 4-5P 2 pcs, Kompor + Gas + Nesting, Matras Tidur 4 pcs, Keril 60L 2 pcs, Sleeping Bag 4 pcs, Headlamp 4 pcs, Kursi Lipat 4 pcs, Meja Kain 2 pcs, Lampu Tenda 2 pcs'},
-  {id:'p5',name:'Kemping Berdua',price:75000,cat:'Paket Kemping',desc:'Tenda 2P, Kompor + Gas + Nesting, Matras Tidur 2 pcs, Sleeping Bag 2 pcs, Headlamp 2 pcs'},
-  {id:'p6',name:'Kemping Bertiga',price:100000,cat:'Paket Kemping',desc:'Tenda 3-4P, Kompor + Gas + Nesting, Matras Tidur 3 pcs, Sleeping Bag 3 pcs, Headlamp 3 pcs'},
-  {id:'p7',name:'Kemping Berempat',price:120000,cat:'Paket Kemping',desc:'Tenda 4-5P, Kompor + Gas + Nesting, Matras Tidur 4 pcs, Sleeping Bag 4 pcs, Headlamp 4 pcs'},
-  {id:'p8',name:'Kemping Komplit',price:170000,cat:'Paket Kemping',desc:'Tenda 4-5P, Kompor + Gas + Nesting, Matras Tidur 4 pcs, Sleeping Bag 4 pcs, Headlamp 4 pcs, Kursi Lipat 4 pcs, Meja Lipat 2 pcs, Lampu Tenda'},
-  {id:'p9',name:'Kemping Ranti Ber-2',price:110000,cat:'Paket Kemping',desc:'Tenda 2P, Kompor + Gas + Nesting, Matras Tidur 2 pcs, Sleeping Bag 2 pcs, Headlamp 2 pcs, Keril 60L, Trekking Pole 2 pcs'},
-  {id:'p10',name:'Kemping Ranti Ber-4',price:195000,cat:'Paket Kemping',desc:'Tenda 3-4P, Kompor + Gas + Nesting, Matras Tidur 4 pcs, Sleeping Bag 4 pcs, Headlamp 4 pcs, Keril 60L 2 pcs, Trekking Pole 4 pcs, Lampu Tenda'}
+  {id:'p1',name:'Kemping Ceria 1',price:85000,cat:'Paket Kemping',desc:'Tenda 4-5P, Kompor + Gas + Nesting, Matras 2 pcs, Sleeping Bag 2 pcs, Headlamp 2 pcs'},
+  {id:'p2',name:'Kemping Ceria 2',price:110000,cat:'Paket Kemping',desc:'Tenda 4-5P, Kompor + Gas + Nesting, Matras 2 pcs, Sleeping Bag 2 pcs, Headlamp 2 pcs, Kursi Lipat 2 pcs, Meja Kain'},
+  {id:'p3',name:'Kemping Ceria 3',price:130000,cat:'Paket Kemping',desc:'Tenda 4-5P, Kompor + Gas + Nesting, Matras 2 pcs, Keril 60L, Sleeping Bag 2 pcs, Headlamp 2 pcs, Kursi Lipat 2 pcs, Meja Kain, Lampu Tenda'},
+  {id:'p4',name:'Kemping Rame2',price:250000,cat:'Paket Kemping',desc:'Tenda 4-5P 2 pcs, Kompor + Gas + Nesting, Matras 4 pcs, Keril 60L 2 pcs, Sleeping Bag 4 pcs, Headlamp 4 pcs, Kursi Lipat 4 pcs, Meja Kain 2 pcs, Lampu Tenda 2 pcs'},
+  {id:'p5',name:'Kemping Berdua',price:75000,cat:'Paket Kemping',desc:'Tenda 2P, Kompor + Gas + Nesting, Matras 2 pcs, Sleeping Bag 2 pcs, Headlamp 2 pcs'},
+  {id:'p6',name:'Kemping Bertiga',price:100000,cat:'Paket Kemping',desc:'Tenda 3-4P, Kompor + Gas + Nesting, Matras 3 pcs, Sleeping Bag 3 pcs, Headlamp 3 pcs'},
+  {id:'p7',name:'Kemping Berempat',price:120000,cat:'Paket Kemping',desc:'Tenda 4-5P, Kompor + Gas + Nesting, Matras 4 pcs, Sleeping Bag 4 pcs, Headlamp 4 pcs'},
+  {id:'p8',name:'Kemping Komplit',price:170000,cat:'Paket Kemping',desc:'Tenda 4-5P, Kompor + Gas + Nesting, Matras 4 pcs, Sleeping Bag 4 pcs, Headlamp 4 pcs, Kursi Lipat 4 pcs, Meja Lipat 2 pcs, Lampu Tenda'},
+  {id:'p9',name:'Kemping Ranti Ber-2',price:110000,cat:'Paket Kemping',desc:'Tenda 2P, Kompor + Gas + Nesting, Matras 2 pcs, Sleeping Bag 2 pcs, Headlamp 2 pcs, Keril 60L, Trekking Pole 2 pcs'},
+  {id:'p10',name:'Kemping Ranti Ber-4',price:195000,cat:'Paket Kemping',desc:'Tenda 3-4P, Kompor + Gas + Nesting, Matras 4 pcs, Sleeping Bag 4 pcs, Headlamp 4 pcs, Keril 60L 2 pcs, Trekking Pole 4 pcs, Lampu Tenda'},
+
+  {id:'p11',name:'Paket Ijen Basic',price:25000,cat:'Paket Ijen',desc:'Trekking Pole, Masker Gas, Sarung Tangan, Headlamp'},
+  {id:'p12',name:'Paket Ijen A',price:35000,cat:'Paket Ijen',desc:'Trekking Pole, Masker Gas, Sarung Tangan, Headlamp, Sepatu'},
+  {id:'p13',name:'Paket Ijen B',price:40000,cat:'Paket Ijen',desc:'Trekking Pole, Masker Gas, Sepatu, Sarung Tangan, Headlamp, Jaket'},
+  {id:'p14',name:'Paket Ijen Komplit',price:50000,cat:'Paket Ijen',desc:'Trekking Pole, Masker Gas, Sarung Tangan, Headlamp, Jaket, Celana'},
+
+  {id:'p15',name:'Tektok Basic',price:30000,cat:'Paket Tektok',desc:''},
+  {id:'p16',name:'Tektok A',price:40000,cat:'Paket Tektok',desc:''},
+  {id:'p17',name:'Tektok B',price:50000,cat:'Paket Tektok',desc:''},
+  {id:'p18',name:'Tektok Komplit',price:60000,cat:'Paket Tektok',desc:''},
+
+  {id:'p19',name:'Paket Memasak',price:20000,cat:'Paket Masak / Grill',desc:''},
+  {id:'p20',name:'Memasak Komplit',price:25000,cat:'Paket Masak / Grill',desc:''},
+  {id:'p21',name:'Grill Ceria',price:25000,cat:'Paket Masak / Grill',desc:''},
+  {id:'p22',name:'Grill Komplit',price:35000,cat:'Paket Masak / Grill',desc:''},
+  {id:'p23',name:'Paket Ceria',price:45000,cat:'Paket Masak / Grill',desc:''},
+  {id:'p24',name:'Paket Memengan',price:45000,cat:'Paket Masak / Grill',desc:''},
+  {id:'p25',name:'Paket Dolanan',price:40000,cat:'Paket Masak / Grill',desc:''},
+  {id:'p26',name:'Paket Bahagia',price:50000,cat:'Paket Masak / Grill',desc:''},
+
+  {id:'p27',name:'2 Kursi XL',price:15000,cat:'Paket Kursi & Meja',desc:'Kursi XL 2 pcs'},
+  {id:'p28',name:'4 Kursi XL',price:30000,cat:'Paket Kursi & Meja',desc:'Kursi XL 4 pcs'},
+  {id:'p29',name:'6 Kursi XL',price:40000,cat:'Paket Kursi & Meja',desc:'Kursi XL 6 pcs'},
+  {id:'p30',name:'8 Kursi XL',price:50000,cat:'Paket Kursi & Meja',desc:'Kursi XL 8 pcs'},
+  {id:'p31',name:'2 Kursi XL + 1 Meja Kain',price:25000,cat:'Paket Kursi & Meja',desc:'Kursi XL 2 pcs + Meja Kain 1 pcs'},
+  {id:'p32',name:'2 Kursi XL + 1 Meja Aluminium',price:30000,cat:'Paket Kursi & Meja',desc:'Kursi XL 2 pcs + Meja Aluminium 1 pcs'},
+  {id:'p33',name:'4 Kursi XL + 2 Meja Kain',price:40000,cat:'Paket Kursi & Meja',desc:'Kursi XL 4 pcs + Meja Kain 2 pcs'},
+  {id:'p34',name:'4 Kursi XL + 1 Meja Aluminium',price:40000,cat:'Paket Kursi & Meja',desc:'Kursi XL 4 pcs + Meja Aluminium 1 pcs'},
+
+  {id:'p35',name:'Paket Kencan',price:30000,cat:'Paket Piknik',desc:''},
+  {id:'p36',name:'Paket Pasang',price:35000,cat:'Paket Piknik',desc:''},
+  {id:'p37',name:'Paket Konco',price:50000,cat:'Paket Piknik',desc:''},
+  {id:'p38',name:'Penak Ngeteh',price:25000,cat:'Paket Piknik',desc:''}
 ];
 
-const ITEMS_PIKNIK = ITEMS_SATUAN
-  .filter(item => item.cat === 'Piknik')
+const ITEMS_PIKNIK = ITEMS_PAKET
+  .filter(item => item.cat === 'Paket Piknik')
   .map(item => ({...item,id:`k_${item.id}`}));
-
 // --- CONSOLIDATED CATALOG FOR DAFTAR HARGA ---
 const KATALOG_SECTIONS = (() => {
   const sections = [];
@@ -193,9 +249,14 @@ const KATALOG_SECTIONS = (() => {
       sections.push({title:`Sewa Satuan - ${catName}`,items});
     }
   });
-  sections.push({
-    title:'Paket Kemping',
-    items:ITEMS_PAKET.map(item=>({name:item.name,price:item.price,desc:item.desc||''}))
+  const packageOrder=['Paket Kemping','Paket Ijen','Paket Tektok','Paket Masak / Grill','Paket Kursi & Meja','Paket Piknik'];
+  packageOrder.forEach(catName=>{
+    const items=ITEMS_PAKET
+      .filter(item=>item.cat===catName)
+      .map(item=>({name:item.name,price:item.price,desc:item.desc||''}));
+    if(items.length){
+      sections.push({title:catName,items});
+    }
   });
   return sections;
 })();
@@ -452,14 +513,10 @@ window.onload = function(){
 function switchTab(tab, el){
   activeTab = tab;
   activecat = 'Semua';
-  if(tab==='catalog')catalogShowAll=false;
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  catalogShowAll=false;
+  document.querySelectorAll('.tab-btn[data-tab]').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
 
-  if(tab==='katalog'){
-    window.open('KATALOG.pdf','_blank');
-    return;
-  }
   document.getElementById('orderView').style.display='block';
   document.getElementById('katalogPage').style.display='none';
   document.getElementById('mobBar').style.display='flex';
@@ -506,8 +563,7 @@ function renderKatalog(){
 
 function renderTab(){
   if(activeTab==='catalog') allItems = [...ITEMS_SATUAN].sort((a,b)=>a.name.localeCompare(b.name,'id',{sensitivity:'base'}));
-  else if(activeTab==='package') allItems = [...ITEMS_PAKET].sort((a,b)=>a.name.localeCompare(b.name,'id',{sensitivity:'base'}));
-  else allItems = [...ITEMS_PIKNIK].sort((a,b)=>a.name.localeCompare(b.name,'id',{sensitivity:'base'}));
+  else allItems = [...ITEMS_PAKET].sort((a,b)=>a.name.localeCompare(b.name,'id',{sensitivity:'base'}));
   buildCatFilter();
   renderGrid(allItems);
   positionDesktopFooter();
@@ -515,15 +571,29 @@ function renderTab(){
 
 function buildCatFilter(){
   const cf = document.getElementById('catFilter');
-  if(activeTab!=='catalog'){
-    cf.style.display='none';
-    cf.innerHTML='';
-    activecat='Semua';
+  cf.style.display='flex';
+  if(activeTab==='catalog'){
+    const cats = ['Semua',...new Set(allItems.map(i=>i.cat))];
+    cf.innerHTML = cats.map(c=>`<div class="cf-btn${c===activecat?' active':''}" onclick="selectCat('${c}',this)">${c}</div>`).join('');
     return;
   }
-  cf.style.display='flex';
-  const cats = ['Semua',...new Set(allItems.map(i=>i.cat))];
-  cf.innerHTML = cats.map(c=>`<div class="cf-btn${c===activecat?' active':''}" onclick="selectCat('${c}',this)">${c}</div>`).join('');
+  const packageFilters = [
+    {label:'Semua',value:'Semua'},
+    {label:'Kemping',value:'Paket Kemping'},
+    {label:'Ijen',value:'Paket Ijen'},
+    {label:'Tektok',value:'Paket Tektok'},
+    {label:'Masak / Grill',value:'Paket Masak / Grill'},
+    {label:'Piknik',value:'Paket Piknik'},
+    {label:'Kursi & Meja',value:'Paket Kursi & Meja'}
+  ];
+  if(activecat==='Semua'){
+    // keep default
+  }else if(!packageFilters.some(f=>f.value===activecat)){
+    activecat='Semua';
+  }
+  cf.innerHTML = packageFilters
+    .map(f=>`<div class="cf-btn${f.value===activecat?' active':''}" onclick="selectCat('${f.value}',this)">${f.label}</div>`)
+    .join('');
 }
 
 function selectCat(cat, el){
@@ -561,7 +631,7 @@ function getCatalogPreviewLimit(){
 function renderCatalogExpandAction(totalCount,shownCount){
   const wrap=document.getElementById('catalogExpandWrap');
   if(!wrap)return;
-  if(activeTab!=='catalog' || catalogShowAll || shownCount>=totalCount){
+  if((activeTab!=='catalog' && activeTab!=='package') || catalogShowAll || shownCount>=totalCount){
     wrap.innerHTML='';
     return;
   }
@@ -576,7 +646,7 @@ function renderGrid(items){
   const g = document.getElementById('itemGrid');
   const rawQuery=(document.getElementById('searchInput').value||'').trim();
   let shownItems=items;
-  if(activeTab==='catalog' && !catalogShowAll && !rawQuery){
+  if((activeTab==='catalog' || activeTab==='package') && !catalogShowAll && !rawQuery){
     shownItems=items.slice(0,getCatalogPreviewLimit());
   }
   if(shownItems.length===0){
@@ -584,7 +654,7 @@ function renderGrid(items){
     renderCatalogExpandAction(items.length,shownItems.length);
     return;
   }
-  const isPkg=(activeTab==='package'||activeTab==='picnic');
+  const isPkg=(activeTab==='package');
   g.innerHTML=shownItems.map((item,idx)=>{
     const inCart=cart.find(c=>c.id===item.id);
     const stockStatus=getStockStatusById(item.id);
@@ -878,7 +948,10 @@ function kirimWA(){
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){tutupModal();closeCartSheet();closeAdminLoginModal()}});
 window.addEventListener('resize',()=>{
-  if(activeTab==='catalog' && !catalogShowAll){
+  if((activeTab==='catalog' || activeTab==='package') && !catalogShowAll){
     applyFilter((document.getElementById('searchInput').value||'').toLowerCase());
   }
 });
+
+
+

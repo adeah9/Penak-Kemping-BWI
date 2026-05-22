@@ -505,10 +505,41 @@ function registerServiceWorker(){
     console.warn('Service worker gagal didaftarkan:',err);
   });
 }
+let viewportSyncTimer=null;
+function syncMobileSheetViewport(){
+  const vv=window.visualViewport;
+  const vh=vv ? Math.round(vv.height) : Math.round(window.innerHeight||0);
+  const vvTop=vv ? Math.max(0,Math.round(vv.offsetTop||0)) : 0;
+  const root=document.documentElement;
+  if(vh>0){
+    root.style.setProperty('--pkb-vh',`${vh}px`);
+  }
+  root.style.setProperty('--pkb-vv-top',`${vvTop}px`);
+}
+function queueSyncMobileSheetViewport(delay){
+  if(viewportSyncTimer){
+    clearTimeout(viewportSyncTimer);
+  }
+  viewportSyncTimer=setTimeout(()=>{syncMobileSheetViewport()},delay);
+}
+function bindMobileSheetViewportSync(){
+  syncMobileSheetViewport();
+  window.addEventListener('resize',()=>queueSyncMobileSheetViewport(0),{passive:true});
+  window.addEventListener('orientationchange',()=>queueSyncMobileSheetViewport(80),{passive:true});
+  if(window.visualViewport){
+    window.visualViewport.addEventListener('resize',()=>{
+      queueSyncMobileSheetViewport(0);
+      queueSyncMobileSheetViewport(90);
+      queueSyncMobileSheetViewport(220);
+    },{passive:true});
+    window.visualViewport.addEventListener('scroll',()=>queueSyncMobileSheetViewport(0),{passive:true});
+  }
+}
 
 window.onload = function(){
   const today = toISODate(new Date());
   registerServiceWorker();
+  bindMobileSheetViewportSync();
   const hdrWa=document.querySelector('.hdr-wa');
   if(hdrWa)hdrWa.href=`https://wa.me/${WA_NUMBER_INTERNATIONAL}`;
   resetOrderInputsOnReload();
@@ -533,6 +564,19 @@ window.onload = function(){
     showAdminPanel(false);
   }
   document.getElementById('modalAdminLogin').addEventListener('click',function(e){if(e.target===this)closeAdminLoginModal()});
+  document.addEventListener('focusin',e=>{
+    if(e.target && e.target.closest && e.target.closest('#cartSheet')){
+      queueSyncMobileSheetViewport(0);
+      queueSyncMobileSheetViewport(120);
+    }
+  });
+  document.addEventListener('focusout',e=>{
+    if(e.target && e.target.closest && e.target.closest('#cartSheet')){
+      queueSyncMobileSheetViewport(0);
+      queueSyncMobileSheetViewport(160);
+      queueSyncMobileSheetViewport(300);
+    }
+  });
   positionDesktopFooter();
 };
 
@@ -915,6 +959,8 @@ function openCartSheet(){
   document.getElementById('sheetOv').classList.add('open');
   document.body.style.overflow='hidden';
   syncDesktopToMobileForm(false);
+  queueSyncMobileSheetViewport(0);
+  queueSyncMobileSheetViewport(120);
   updateMobileBottomButtonState();
   saveOrderDraft();
 }
@@ -937,6 +983,8 @@ function closeCartSheet(){
   if(wasOpen){
     syncMobileToDesktopForm();
   }
+  queueSyncMobileSheetViewport(0);
+  queueSyncMobileSheetViewport(120);
   updateMobileBottomButtonState();
   saveOrderDraft();
 }
@@ -1037,6 +1085,8 @@ function kirimWA(){
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){tutupModal();closeCartSheet();closeAdminLoginModal()}});
 window.addEventListener('resize',()=>{
+  queueSyncMobileSheetViewport(0);
+  queueSyncMobileSheetViewport(120);
   updateFilterRowsState();
   if((activeTab==='catalog' || activeTab==='package') && !catalogShowAll){
     applyFilter((document.getElementById('searchInput').value||'').toLowerCase());

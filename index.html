@@ -356,7 +356,7 @@
     <button class="btn-mob btn-mob-db" id="btnDbEntryMobBar" onclick="masukDatabaseOrder()">
       <i class="fas fa-database"></i> Masuk Database
     </button>
-    <button class="btn-mob" onclick="handleMobileOrderCTA()">
+    <button class="btn-mob" id="btnMobOrderMain" onclick="handleMobileBottomAction()">
       <i class="fas fa-shopping-bag"></i> Lihat Keranjang
     </button>
   </div>
@@ -368,10 +368,9 @@
   <div class="cs-handle"></div>
   <div class="cs-hdr">
     <div class="cs-title">Pesanan Kamu</div>
-  </div>
-  <div class="cs-close-wrap">
     <button class="cs-close" onclick="closeCartSheet()" aria-label="Tutup Pesanan"><i class="fas fa-times"></i></button>
   </div>
+  <div class="cs-scroll">
   <div class="cs-form">
       <div id="orderNumM" style="display:none"></div>
       <div style="display:flex;flex-direction:column;gap:9px">
@@ -426,6 +425,7 @@
     </div>
   </div>
   <div class="cs-body"><div id="cartListM"></div></div>
+  </div>
   <div class="cs-footer">
     <div class="sum-line"><span class="sum-line-k">Subtotal/hari</span><span class="sum-line-v" id="subtotalM">Rp 0</span></div>
     <div class="sum-total-line">

@@ -420,6 +420,26 @@ function setSubmitLoading(isLoading){
     mobileBtn.disabled=!!isLoading;
     mobileBtn.innerHTML=isLoading?'<i class="fas fa-spinner fa-spin"></i> Memproses...':'<i class="fas fa-receipt"></i> Buat Pesanan';
   }
+  const mobileBottomBtn=document.getElementById('btnMobOrderMain');
+  if(mobileBottomBtn){
+    mobileBottomBtn.disabled=!!isLoading;
+    if(isLoading){
+      mobileBottomBtn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Memproses...';
+    }else{
+      updateMobileBottomButtonState();
+    }
+  }
+}
+function updateMobileBottomButtonState(){
+  const btn=document.getElementById('btnMobOrderMain');
+  if(!btn)return;
+  if(isCartSheetOpen()){
+    btn.innerHTML='<i class="fas fa-receipt"></i> Buat Pesanan';
+    btn.setAttribute('aria-label','Buat Pesanan');
+  }else{
+    btn.innerHTML='<i class="fas fa-shopping-bag"></i> Lihat Keranjang';
+    btn.setAttribute('aria-label','Lihat Keranjang');
+  }
 }
 function buildCurrentOrderPayload(){
   const nama=getNamaPemesan();
@@ -499,6 +519,7 @@ window.onload = function(){
   renderCart();
   hitungTotal();
   hitungKembali();
+  updateMobileBottomButtonState();
   updateAdminAuthButton();
   if(typeof resetAdminForm==='function')resetAdminForm();
   if(typeof loadStockMapFromServer==='function'){
@@ -894,9 +915,18 @@ function openCartSheet(){
   document.getElementById('sheetOv').classList.add('open');
   document.body.style.overflow='hidden';
   syncDesktopToMobileForm(false);
+  updateMobileBottomButtonState();
   saveOrderDraft();
 }
 function handleMobileOrderCTA(){
+  openCartSheet();
+}
+function handleMobileBottomAction(){
+  if(isSubmittingOrder)return;
+  if(isCartSheetOpen()){
+    tampilRingkasan();
+    return;
+  }
   openCartSheet();
 }
 function closeCartSheet(){
@@ -907,6 +937,7 @@ function closeCartSheet(){
   if(wasOpen){
     syncMobileToDesktopForm();
   }
+  updateMobileBottomButtonState();
   saveOrderDraft();
 }
 function positionDesktopFooter(){

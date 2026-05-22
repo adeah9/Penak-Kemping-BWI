@@ -272,6 +272,8 @@ let lastInvoicePayload = null;
 let itemStockMap = {};
 let isSubmittingOrder = false;
 let catalogShowAll = false;
+let filterExpanded = false;
+const animatedItemIds = new Set();
 const CATALOG_INITIAL_ROWS = 5;
 
 const GAS_WEB_APP_URL_KEY = 'PKB_GAS_WEB_APP_URL';
@@ -413,7 +415,7 @@ function setSubmitLoading(isLoading){
     const btn=document.getElementById(id);
     if(!btn)return;
     btn.disabled=!!isLoading;
-    btn.innerHTML=isLoading?'<i class="fas fa-spinner fa-spin"></i> Memproses...':'<i class="fas fa-paper-plane"></i> Lihat Keranjang';
+    btn.innerHTML=isLoading?'<i class="fas fa-spinner fa-spin"></i> Memproses...':'<i class="fas fa-shopping-bag"></i> Lihat Keranjang';
   });
 }
 function buildCurrentOrderPayload(){
@@ -514,6 +516,7 @@ function switchTab(tab, el){
   activeTab = tab;
   activecat = 'Semua';
   catalogShowAll=false;
+  filterExpanded=false;
   document.querySelectorAll('.tab-btn[data-tab]').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
 
@@ -575,6 +578,7 @@ function buildCatFilter(){
   if(activeTab==='catalog'){
     const cats = ['Semua',...new Set(allItems.map(i=>i.cat))];
     cf.innerHTML = cats.map(c=>`<div class="cf-btn${c===activecat?' active':''}" onclick="selectCat('${c}',this)">${c}</div>`).join('');
+    updateFilterRowsState();
     return;
   }
   const packageFilters = [
@@ -594,6 +598,7 @@ function buildCatFilter(){
   cf.innerHTML = packageFilters
     .map(f=>`<div class="cf-btn${f.value===activecat?' active':''}" onclick="selectCat('${f.value}',this)">${f.label}</div>`)
     .join('');
+  updateFilterRowsState();
 }
 
 function selectCat(cat, el){
@@ -602,6 +607,40 @@ function selectCat(cat, el){
   document.querySelectorAll('.cf-btn').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
   applyFilter(document.getElementById('searchInput').value.toLowerCase());
+}
+
+function toggleFilterRows(){
+  filterExpanded=!filterExpanded;
+  updateFilterRowsState();
+}
+
+function updateFilterRowsState(){
+  const cf=document.getElementById('catFilter');
+  if(!cf)return;
+  const oldToggle=cf.querySelector('.cf-toggle-btn');
+  if(oldToggle)oldToggle.remove();
+  const btns=[...cf.querySelectorAll('.cf-btn')];
+  if(!btns.length)return;
+  btns.forEach(b=>b.classList.remove('cf-row-hidden'));
+  const rows=[];
+  btns.forEach(b=>{
+    const top=b.offsetTop;
+    if(!rows.includes(top))rows.push(top);
+  });
+  if(rows.length<=2)return;
+  if(!filterExpanded){
+    btns.forEach(b=>{
+      const rowIndex=rows.indexOf(b.offsetTop);
+      if(rowIndex>=2)b.classList.add('cf-row-hidden');
+    });
+  }
+  const toggle=document.createElement('button');
+  toggle.type='button';
+  toggle.className='cf-toggle-btn';
+  toggle.setAttribute('aria-label',filterExpanded?'Tampilkan lebih sedikit filter':'Tampilkan filter lainnya');
+  toggle.innerHTML=filterExpanded?'<i class="fas fa-chevron-up"></i>':'<i class="fas fa-chevron-down"></i>';
+  toggle.onclick=toggleFilterRows;
+  cf.appendChild(toggle);
 }
 
 function filterItems(){
@@ -631,14 +670,27 @@ function getCatalogPreviewLimit(){
 function renderCatalogExpandAction(totalCount,shownCount){
   const wrap=document.getElementById('catalogExpandWrap');
   if(!wrap)return;
-  if((activeTab!=='catalog' && activeTab!=='package') || catalogShowAll || shownCount>=totalCount){
+  if((activeTab!=='catalog' && activeTab!=='package')){
     wrap.innerHTML='';
     return;
   }
-  wrap.innerHTML='<button class="catalog-expand-btn" type="button" onclick="showAllCatalogItems()">Tampilkan Semua</button>';
+  const hasMore=shownCount<totalCount;
+  if(hasMore){
+    wrap.innerHTML='<button class="catalog-expand-btn" type="button" onclick="showAllCatalogItems()">Tampilkan Semua</button>';
+    return;
+  }
+  if(catalogShowAll && totalCount>getCatalogPreviewLimit()){
+    wrap.innerHTML='<button class="catalog-expand-btn" type="button" onclick="showLessCatalogItems()">Tampilkan Sedikit</button>';
+    return;
+  }
+  wrap.innerHTML='';
 }
 function showAllCatalogItems(){
   catalogShowAll=true;
+  applyFilter((document.getElementById('searchInput').value||'').toLowerCase());
+}
+function showLessCatalogItems(){
+  catalogShowAll=false;
   applyFilter((document.getElementById('searchInput').value||'').toLowerCase());
 }
 
@@ -660,7 +712,11 @@ function renderGrid(items){
     const stockStatus=getStockStatusById(item.id);
     const unavailable=stockStatus!=='tersedia';
     const stockTag=stockStatus==='habis'?'Habis':(stockStatus==='maintenance'?'Maintenance':'');
-    return `<div class="item-card${inCart?' in-cart':''}${unavailable?' unavailable':''}" onclick="toggleItem('${item.id}')" style="animation-delay:${idx*0.02}s" data-id="${item.id}">
+    const isFirstRender=!animatedItemIds.has(item.id);
+    if(isFirstRender)animatedItemIds.add(item.id);
+    const animClass=isFirstRender?' animate-in':'';
+    const animDelay=isFirstRender?` style="animation-delay:${idx*0.02}s"`:'';
+    return `<div class="item-card${animClass}${inCart?' in-cart':''}${unavailable?' unavailable':''}" onclick="toggleItem('${item.id}')"${animDelay} data-id="${item.id}">
       ${stockTag?`<span class="item-stock-tag ${stockStatus}">${stockTag}</span>`:''}
       <div class="item-cat-badge">${item.cat}</div>
       ${isPkg?'<span class="item-pkg-badge">PAKET</span>':''} 
@@ -948,6 +1004,7 @@ function kirimWA(){
 
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){tutupModal();closeCartSheet();closeAdminLoginModal()}});
 window.addEventListener('resize',()=>{
+  updateFilterRowsState();
   if((activeTab==='catalog' || activeTab==='package') && !catalogShowAll){
     applyFilter((document.getElementById('searchInput').value||'').toLowerCase());
   }

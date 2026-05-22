@@ -57,6 +57,26 @@ function showAdminPanel(show){
   if(!panel)return;
   panel.classList.toggle('show',!!show);
 }
+function isAuthTokenExpiredMessage(message){
+  const txt=String(message||'').toLowerCase();
+  if(!txt)return false;
+  if(txt.includes('unauthorized'))return true;
+  if(!txt.includes('token'))return false;
+  return txt.includes('expired')
+    || txt.includes('kadaluarsa')
+    || txt.includes('tidak valid')
+    || txt.includes('invalid')
+    || txt.includes('silakan login ulang')
+    || txt.includes('akses ditolak');
+}
+function handleSessionExpired(message){
+  if(!isAuthTokenExpiredMessage(message))return false;
+  setAdminLoginState('');
+  updateAdminAuthButton();
+  showAdminPanel(false);
+  toast('Sesi admin habis. Silakan login ulang.');
+  return true;
+}
 function openAdminLoginModal(){document.getElementById('modalAdminLogin').classList.add('show')}
 function closeAdminLoginModal(){document.getElementById('modalAdminLogin').classList.remove('show')}
 async function handleAdminAuth(){
@@ -313,6 +333,10 @@ function resetAdminFilters(){
   syncAdminFilterInputs();
   refreshAdminOrderView();
 }
+function lihatSemuaOrder(){
+  resetAdminFilters();
+  loadOrdersFromSheet();
+}
 function updateAdminRecap(filteredRows){
   const orderLabel=document.getElementById('recapOrderLabel');
   const omzetLabel=document.getElementById('recapOmzetLabel');
@@ -505,6 +529,7 @@ function normalizeApiMessage(message){
 function ensureApiSuccess(resp,fallbackMessage){
   if(!resp || resp.success===false){
     const msg=normalizeApiMessage((resp && resp.message) || fallbackMessage || 'Permintaan gagal.');
+    handleSessionExpired(msg);
     throw new Error(msg);
   }
   return resp;
@@ -636,8 +661,12 @@ async function loadOrdersFromSheet(){
 }
 function renderAdminOrders(rows){
   const body=document.getElementById('adminOrdersBody');
+  const mobileWrap=document.getElementById('adminOrdersMobile');
   if(!rows || rows.length===0){
     body.innerHTML='<tr><td colspan="8" class="admin-empty">Belum ada data order.</td></tr>';
+    if(mobileWrap){
+      mobileWrap.innerHTML='<div class="admin-mobile-empty">Belum ada data order.</div>';
+    }
     return;
   }
   body.innerHTML=rows.map((r)=>{
@@ -660,6 +689,32 @@ function renderAdminOrders(rows){
       </td>
     </tr>`;
   }).join('');
+  if(mobileWrap){
+    mobileWrap.innerHTML=rows.map((r)=>{
+      const opts=ORDER_STATUS.map(s=>`<option value="${s}"${s===r.status?' selected':''}>${s}</option>`).join('');
+      const noEnc=encodeURIComponent(r.noPesanan||'');
+      return `<div class="admin-mobile-card">
+        <div class="admin-mobile-top">
+          <div class="admin-mobile-name">${escapeHtml(r.nama||'-')}</div>
+          <div class="admin-mobile-total">${fmt(Number(r.total)||0)}</div>
+        </div>
+        <div class="admin-mobile-meta">
+          <span>${escapeHtml(formatDbDate(r.tanggalAmbil))}</span>
+          <span>${escapeHtml(r.durasi)} hari</span>
+          <span>${escapeHtml(r.whatsapp||'-')}</span>
+        </div>
+        <details class="admin-mobile-detail">
+          <summary>Lihat Detail</summary>
+          <div class="admin-mobile-item"><b>Item:</b> ${escapeHtml(r.daftarItem||'-')}</div>
+          <div class="admin-mobile-item"><b>Catatan:</b> ${escapeHtml(r.catatan||'-')}</div>
+        </details>
+        <div class="admin-mobile-actions">
+          <select class="admin-status" onchange="updateOrderStatus(decodeURIComponent('${noEnc}'),this.value)">${opts}</select>
+          <button class="admin-mini-btn danger" onclick="deleteOrder(decodeURIComponent('${noEnc}'))">Hapus</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
 }
 async function updateOrderStatus(noPesanan,status){
   try{
@@ -668,7 +723,11 @@ async function updateOrderStatus(noPesanan,status){
     ensureApiSuccess(resp,'Gagal update status.');
     toast('Status order diperbarui');
     loadOrdersFromSheet();
-  }catch(err){toast(`Gagal update status: ${normalizeApiMessage(err.message)}`)}
+  }catch(err){
+    const msg=normalizeApiMessage(err.message);
+    if(handleSessionExpired(msg))return;
+    toast(`Gagal update status: ${msg}`);
+  }
 }
 async function deleteOrder(noPesanan){
   if(!confirm('Hapus / cancel order ini?'))return;
@@ -678,7 +737,11 @@ async function deleteOrder(noPesanan){
     ensureApiSuccess(resp,'Gagal hapus order.');
     toast('Order berhasil dihapus');
     loadOrdersFromSheet();
-  }catch(err){toast(`Gagal hapus order: ${normalizeApiMessage(err.message)}`)}
+  }catch(err){
+    const msg=normalizeApiMessage(err.message);
+    if(handleSessionExpired(msg))return;
+    toast(`Gagal hapus order: ${msg}`);
+  }
 }
 async function addManualOrder(){
   const nama=(document.getElementById('admNama').value||'').trim();
@@ -702,7 +765,11 @@ async function addManualOrder(){
     toast('Order manual tersimpan');
     resetAdminForm();
     loadOrdersFromSheet();
-  }catch(err){toast(`Gagal simpan order: ${err.message}`)}
+  }catch(err){
+    const msg=normalizeApiMessage(err.message);
+    if(handleSessionExpired(msg))return;
+    toast(`Gagal simpan order: ${msg}`);
+  }
 }
 async function pushCurrentOrderToSheet(orderData){
   if(!isGasConfigured())return;
@@ -733,7 +800,9 @@ async function masukDatabaseOrder(){
     showAdminPanel(true);
     loadOrdersFromSheet();
   }catch(err){
-    toast(`Gagal masuk database: ${err.message}`);
+    const msg=normalizeApiMessage(err.message);
+    if(handleSessionExpired(msg))return;
+    toast(`Gagal masuk database: ${msg}`);
   }finally{
     buttons.forEach((btn,idx)=>{
       btn.disabled=false;
@@ -864,7 +933,9 @@ async function saveStockChanges(){
     updateSaveStockButtonState();
     toast(`Berhasil simpan ${ok} perubahan stok`);
   }catch(err){
-    toast(`Gagal simpan stok: ${normalizeApiMessage(err.message)}`);
+    const msg=normalizeApiMessage(err.message);
+    if(handleSessionExpired(msg))return;
+    toast(`Gagal simpan stok: ${msg}`);
   }finally{
     if(btn){
       btn.innerText=oldText;

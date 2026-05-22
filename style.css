@@ -58,7 +58,7 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.95);backd
 .hdr-admin:hover{background:var(--line-l)}
 .hdr-wa{display:flex;align-items:center;gap:6px;padding:7px 13px;background:var(--white);border:1px solid var(--line);border-radius:var(--r-sm);font-size:12px;font-weight:600;color:var(--ink-2);text-decoration:none;transition:var(--t)}
 .hdr-wa:hover{background:var(--line-l)}
-.hdr-wa i{color:#25D366;font-size:14px}
+.hdr-wa i{color:#E1306C;font-size:14px}
 
 /* HERO */
 .hero{position:relative;z-index:1;max-width:1140px;margin:0 auto;padding:36px 20px 28px;display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap}

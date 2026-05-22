@@ -541,7 +541,7 @@ window.onload = function(){
   registerServiceWorker();
   bindMobileSheetViewportSync();
   const hdrWa=document.querySelector('.hdr-wa');
-  if(hdrWa)hdrWa.href=`https://wa.me/${WA_NUMBER_INTERNATIONAL}`;
+  if(hdrWa)hdrWa.href='https://www.instagram.com/penakkemping/';
   resetOrderInputsOnReload();
   generateOrderNum();
   hitungKembali();

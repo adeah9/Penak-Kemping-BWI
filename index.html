@@ -329,6 +329,7 @@
       <table class="admin-table">
         <thead>
           <tr>
+            <th>Kode Pesanan</th>
             <th>Nama</th>
             <th>WhatsApp</th>
             <th>Jaminan</th>
@@ -344,7 +345,7 @@
           </tr>
         </thead>
         <tbody id="adminOrdersBody">
-          <tr><td colspan="12" class="admin-empty">Belum ada data.</td></tr>
+          <tr><td colspan="13" class="admin-empty">Belum ada data.</td></tr>
         </tbody>
       </table>
     </div>
@@ -361,7 +362,7 @@
     <button class="btn-mob btn-mob-db" id="btnDbEntryMobBar" onclick="masukDatabaseOrder()">
       <i class="fas fa-database"></i> Masuk Database
     </button>
-    <button class="btn-mob" onclick="openCartSheet()">
+    <button class="btn-mob" onclick="handleMobileOrderCTA()">
       <i class="fas fa-shopping-bag"></i> Pesan Sekarang
     </button>
   </div>
@@ -428,6 +429,9 @@
       <span class="sum-total-k">Total</span>
       <span class="sum-total-v" id="grandTotalMSheet">Rp 0</span>
     </div>
+    <button class="btn-order btn-order-back" type="button" onclick="closeCartSheet()">
+      <i class="fas fa-chevron-left"></i> Kembali Pilih Pesanan
+    </button>
     <button class="btn-order" id="btnOrderM" onclick="tampilRingkasan()">
       <i class="fas fa-paper-plane"></i> Lihat Keranjang
     </button>
@@ -555,6 +559,5 @@
 <script src="admin.js"></script>
 </body>
 </html>
-
 
 

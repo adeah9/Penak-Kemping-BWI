@@ -3,7 +3,7 @@ const SPREADSHEET_ID_FALLBACK = '1JYywk5ud8KnQDriZaqeyla6Q_K1F4CM2cbdMfRyQHE';
 const SHEET_ORDERS = 'Orders';
 const SHEET_STOCK = 'Stock';
 const ORDER_HEADERS = [
-  'ID Internal',
+  'Kode Pesanan',
   'Nama',
   'WhatsApp',
   'Jaminan',
@@ -332,18 +332,33 @@ function sanitizeWaktuOrderColumn_(sh) {
   if (changed) range.setValues(next);
 }
 
-function generateInternalOrderId_() {
-  var tz = Session.getScriptTimeZone() || 'Asia/Jakarta';
-  var stamp = Utilities.formatDate(new Date(), tz, 'yyMMddHHmmss');
-  var rand = Math.floor(Math.random() * 9000) + 1000;
-  return 'ORD-' + stamp + '-' + rand;
+function isSimpleOrderCode_(value) {
+  return /^PKB-\d{3,}$/i.test(String(value || '').trim());
 }
 
 function normalizeInternalOrderId_(value) {
-  var raw = String(value || '').trim();
+  var raw = String(value || '').trim().toUpperCase();
   if (!raw) return '';
-  if (/^(PKB|ADM)-/i.test(raw)) return '';
-  return raw;
+  if (isSimpleOrderCode_(raw)) return raw;
+  return '';
+}
+
+function generateInternalOrderId_(sheet) {
+  var sh = sheet || getOrdersSheet_();
+  var lastRow = sh.getLastRow();
+  var maxNum = 0;
+  if (lastRow >= 2) {
+    var values = sh.getRange(2, 1, lastRow - 1, 1).getValues();
+    values.forEach(function (r) {
+      var code = String(r[0] || '').trim().toUpperCase();
+      var match = code.match(/^PKB-(\d+)$/);
+      if (!match) return;
+      var num = Number(match[1]);
+      if (num > maxNum) maxNum = num;
+    });
+  }
+  var next = maxNum + 1;
+  return 'PKB-' + String(next).padStart(3, '0');
 }
 
 function sanitizeInternalIdColumn_(sh) {
@@ -352,10 +367,27 @@ function sanitizeInternalIdColumn_(sh) {
   var range = sh.getRange(2, 1, lastRow - 1, 1);
   var values = range.getValues();
   var changed = false;
+  var used = {};
+  var maxNum = 0;
+  values.forEach(function (r) {
+    var current = String(r[0] || '').trim().toUpperCase();
+    var match = current.match(/^PKB-(\d+)$/);
+    if (!match) return;
+    var num = Number(match[1]);
+    if (!num) return;
+    used[num] = true;
+    if (num > maxNum) maxNum = num;
+  });
+  var nextNum = maxNum + 1;
   var next = values.map(function (r) {
-    var current = String(r[0] || '').trim();
+    var current = String(r[0] || '').trim().toUpperCase();
     var normalized = normalizeInternalOrderId_(current);
-    if (!normalized) normalized = generateInternalOrderId_();
+    if (!normalized) {
+      while (used[nextNum]) nextNum++;
+      normalized = 'PKB-' + String(nextNum).padStart(3, '0');
+      used[nextNum] = true;
+      nextNum++;
+    }
     if (current !== normalized) changed = true;
     return [normalized];
   });
@@ -391,8 +423,8 @@ function createOrUpsertOrder_(order) {
   const providedId = normalizeInternalOrderId_(order.noPesanan || order.id || '');
   const targetRow = providedId ? findRowByNoPesanan_(sh, providedId) : -1;
   const internalId = targetRow > 0
-    ? String(sh.getRange(targetRow, 1).getValue() || providedId || generateInternalOrderId_())
-    : (providedId || generateInternalOrderId_());
+    ? String(sh.getRange(targetRow, 1).getValue() || providedId || generateInternalOrderId_(sh))
+    : (providedId || generateInternalOrderId_(sh));
   order.noPesanan = internalId;
   const row = orderToRow_(order);
   if (targetRow > 0) {

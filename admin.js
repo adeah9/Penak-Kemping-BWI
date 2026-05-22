@@ -153,7 +153,7 @@ function hitungAdminKembali(){
 function setAdminMeta(text){document.getElementById('adminMeta').innerText=text}
 function normalizeOrderRow(row){
   return {
-    noPesanan: row.noPesanan||row['ID Internal']||row['No Pesanan']||'',
+    noPesanan: row.noPesanan||row['Kode Pesanan']||row['ID Internal']||row['No Pesanan']||'',
     nama: row.nama||row['Nama']||'',
     whatsapp: row.whatsapp||row['WhatsApp']||'',
     jaminan: row.jaminan||row['Jaminan']||'',
@@ -637,13 +637,14 @@ async function loadOrdersFromSheet(){
 function renderAdminOrders(rows){
   const body=document.getElementById('adminOrdersBody');
   if(!rows || rows.length===0){
-    body.innerHTML='<tr><td colspan="12" class="admin-empty">Belum ada data order.</td></tr>';
+    body.innerHTML='<tr><td colspan="13" class="admin-empty">Belum ada data order.</td></tr>';
     return;
   }
   body.innerHTML=rows.map((r)=>{
     const opts=ORDER_STATUS.map(s=>`<option value="${s}"${s===r.status?' selected':''}>${s}</option>`).join('');
     const noEnc=encodeURIComponent(r.noPesanan||'');
     return `<tr>
+      <td><span class="admin-order-code">${escapeHtml(r.noPesanan||'-')}</span></td>
       <td>${escapeHtml(r.nama)}</td>
       <td>${escapeHtml(r.whatsapp)}</td>
       <td>${escapeHtml(r.jaminan||'-')}</td>

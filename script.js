@@ -221,6 +221,7 @@ let ordersCache = [];
 let lastInvoicePayload = null;
 let itemStockMap = {};
 let isSubmittingOrder = false;
+const ORDER_DRAFT_KEY = 'penak_order_draft_v1';
 
 const GAS_WEB_APP_URL_KEY = 'PKB_GAS_WEB_APP_URL';
 const GAS_WEB_APP_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbx824RKApDjyfBf4jeI6CPJOupLo2KKYKPh9BYaLDYubVHdLMGYLFCnAEFJJphjfw3w/exec';
@@ -278,6 +279,115 @@ function getNamaPemesan(){return getSyncedValue('namaPemesan','namaPesananM')}
 function getWaPemesan(){return getSyncedValue('waPemesan','waPesananM')}
 function getJaminanPemesan(){return getSyncedValue('jaminanPemesan','jaminanPesananM')}
 function getCatatanPemesan(){return getSyncedValue('catatanPemesan','catatanPesananM')}
+function getInputValue(id){const el=document.getElementById(id);return el?String(el.value||''):''}
+function setInputValue(id,value){const el=document.getElementById(id);if(el)el.value=String(value||'')}
+function syncDesktopToMobileForm(force){
+  const forceSync=!!force;
+  const pairs=[
+    ['namaPemesan','namaPesananM'],
+    ['waPemesan','waPesananM'],
+    ['jaminanPemesan','jaminanPesananM'],
+    ['catatanPemesan','catatanPesananM'],
+    ['tglPesan','tglPesanM'],
+    ['durasiSewa','durasiM']
+  ];
+  pairs.forEach(([deskId,mobId])=>{
+    const desk=getInputValue(deskId);
+    const mob=getInputValue(mobId);
+    if(forceSync || !mob){
+      setInputValue(mobId,desk);
+    }
+  });
+}
+function syncMobileToDesktopForm(){
+  const pairs=[
+    ['namaPesananM','namaPemesan'],
+    ['waPesananM','waPemesan'],
+    ['jaminanPesananM','jaminanPemesan'],
+    ['catatanPesananM','catatanPemesan'],
+    ['tglPesanM','tglPesan'],
+    ['durasiM','durasiSewa']
+  ];
+  pairs.forEach(([mobId,deskId])=>{
+    const mob=getInputValue(mobId);
+    setInputValue(deskId,mob);
+  });
+}
+function buildOrderDraftState(){
+  return {
+    activeTab,
+    activecat,
+    currentOrderNum,
+    cart,
+    form:{
+      nama:getInputValue('namaPemesan'),
+      wa:getInputValue('waPemesan'),
+      jaminan:getInputValue('jaminanPemesan'),
+      catatan:getInputValue('catatanPemesan'),
+      tgl:getInputValue('tglPesan'),
+      durasi:getInputValue('durasiSewa')
+    }
+  };
+}
+function saveOrderDraft(){
+  try{
+    sessionStorage.setItem(ORDER_DRAFT_KEY,JSON.stringify(buildOrderDraftState()));
+  }catch(_err){}
+}
+function restoreOrderDraft(){
+  let raw='';
+  try{
+    raw=sessionStorage.getItem(ORDER_DRAFT_KEY)||'';
+  }catch(_err){}
+  if(!raw)return;
+  try{
+    const data=JSON.parse(raw);
+    if(data && typeof data==='object'){
+      if(data.activeTab && ['catalog','package','picnic'].includes(data.activeTab)){
+        activeTab=data.activeTab;
+        const tabBtns=document.querySelectorAll('.tab-nav .tab-btn');
+        tabBtns.forEach(btn=>btn.classList.remove('active'));
+        const idx=(activeTab==='catalog')?0:(activeTab==='package')?1:2;
+        if(tabBtns[idx])tabBtns[idx].classList.add('active');
+      }
+      if(data.activecat){
+        activecat=String(data.activecat);
+      }
+      if(Array.isArray(data.cart)){
+        const all=[...ITEMS_SATUAN,...ITEMS_PAKET,...ITEMS_PIKNIK];
+        cart=data.cart
+          .map(item=>{
+            const master=all.find(m=>m.id===item.id);
+            if(!master)return null;
+            const qty=Math.max(1,parseInt(item.qty)||1);
+            return {...master,qty};
+          })
+          .filter(Boolean);
+      }
+      if(data.currentOrderNum){
+        currentOrderNum=String(data.currentOrderNum);
+        document.getElementById('orderNumD').innerText=currentOrderNum;
+        document.getElementById('orderNumM').innerText=currentOrderNum;
+      }
+      if(data.form && typeof data.form==='object'){
+        setInputValue('namaPemesan',data.form.nama||'');
+        setInputValue('waPemesan',data.form.wa||'');
+        setInputValue('jaminanPemesan',data.form.jaminan||'');
+        setInputValue('catatanPemesan',data.form.catatan||'');
+        if(data.form.tgl)setInputValue('tglPesan',data.form.tgl);
+        if(data.form.durasi)setInputValue('durasiSewa',data.form.durasi);
+      }
+    }
+  }catch(_err){}
+}
+function bindOrderDraftAutosave(){
+  const ids=['namaPemesan','waPemesan','jaminanPemesan','catatanPemesan','tglPesan','durasiSewa','namaPesananM','waPesananM','jaminanPesananM','catatanPesananM','tglPesanM','durasiM'];
+  ids.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    ['input','change'].forEach(evt=>el.addEventListener(evt,()=>saveOrderDraft()));
+  });
+}
 function getStockStatusById(id){
   const status=String(itemStockMap[id]||'tersedia').toLowerCase();
   return STOCK_STATUS.includes(status)?status:'tersedia';
@@ -376,6 +486,13 @@ window.onload = function(){
   generateOrderNum();
   hitungKembali();
   renderTab();
+  restoreOrderDraft();
+  syncDesktopToMobileForm(true);
+  renderTab();
+  renderCart();
+  hitungTotal();
+  hitungKembali();
+  bindOrderDraftAutosave();
   updateAdminAuthButton();
   if(typeof loadStockMapFromServer==='function'){
     loadStockMapFromServer();
@@ -514,6 +631,7 @@ function toggleItem(id){
   if(idx>=0) cart[idx].qty++;
   else cart.push({...item,qty:1});
   bumpBadge();renderCart();updateGridHighlight();hitungTotal();
+  saveOrderDraft();
   toast(`${item.name} ditambahkan`);
 }
 
@@ -523,10 +641,12 @@ function changeQty(id,delta){
   cart[idx].qty+=delta;
   if(cart[idx].qty<=0)cart.splice(idx,1);
   renderCart();updateGridHighlight();hitungTotal();
+  saveOrderDraft();
 }
 function removeItem(id){
   cart=cart.filter(c=>c.id!==id);
   renderCart();updateGridHighlight();hitungTotal();
+  saveOrderDraft();
 }
 function updateGridHighlight(){
   document.querySelectorAll('.item-card').forEach(card=>{
@@ -616,21 +736,31 @@ function syncFromMobile(){
   document.getElementById('tglPesan').value=tgl;
   document.getElementById('durasiSewa').value=dur;
   hitungTotal();hitungKembali();
+  saveOrderDraft();
 }
 function setDur(n){
   document.getElementById('durasiSewa').value=n;
   document.getElementById('durasiM').value=n;
   hitungTotal();hitungKembali();
+  saveOrderDraft();
 }
 
 function openCartSheet(){
   document.getElementById('cartSheet').classList.add('open');
   document.getElementById('sheetOv').classList.add('open');
   document.body.style.overflow='hidden';
-  document.getElementById('namaPesananM').value=document.getElementById('namaPemesan').value;
-  document.getElementById('waPesananM').value=document.getElementById('waPemesan').value;
-  document.getElementById('jaminanPesananM').value=document.getElementById('jaminanPemesan').value;
-  document.getElementById('catatanPesananM').value=document.getElementById('catatanPemesan').value;
+  syncDesktopToMobileForm(false);
+  saveOrderDraft();
+}
+function handleMobileOrderCTA(){
+  const namaReady=!!getNamaPemesan();
+  const tglReady=!!document.getElementById('tglPesan').value;
+  const cartReady=cart.length>0;
+  if(namaReady && tglReady && cartReady){
+    tampilRingkasan();
+    return;
+  }
+  openCartSheet();
 }
 function closeCartSheet(){
   const wasOpen=isCartSheetOpen();
@@ -638,11 +768,9 @@ function closeCartSheet(){
   document.getElementById('sheetOv').classList.remove('open');
   document.body.style.overflow='';
   if(wasOpen){
-    document.getElementById('namaPemesan').value=document.getElementById('namaPesananM').value;
-    document.getElementById('waPemesan').value=document.getElementById('waPesananM').value;
-    document.getElementById('jaminanPemesan').value=document.getElementById('jaminanPesananM').value;
-    document.getElementById('catatanPemesan').value=document.getElementById('catatanPesananM').value;
+    syncMobileToDesktopForm();
   }
+  saveOrderDraft();
 }
 function positionDesktopFooter(){
   const footer=document.getElementById('panelFooterD');
@@ -700,6 +828,7 @@ async function tampilRingkasan(){
     const payload=buildCurrentOrderPayload();
     lastInvoicePayload=payload;
     updateInvoiceDbButton();
+    saveOrderDraft();
   }finally{
     isSubmittingOrder=false;
     setSubmitLoading(false);

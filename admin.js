@@ -329,7 +329,7 @@ function syncAdminFilterInputs(){
   if(sortEl)sortEl.value=adminFilterDraft.sort;
   if(timeLbl){
     if(adminFilterDraft.mode==='month')timeLbl.innerText='Filter Bulan';
-    else if(adminFilterDraft.mode==='all')timeLbl.innerText='Tanpa Filter Waktu';
+    else if(adminFilterDraft.mode==='all')timeLbl.innerText='';
     else timeLbl.innerText='Filter Tanggal';
   }
 }

@@ -336,11 +336,9 @@ function toISODate(dateObj){
 function getTanggalKembaliISO(tglAmbil,durasi){if(!tglAmbil)return'';const d=new Date(tglAmbil+'T00:00:00');d.setDate(d.getDate()+(parseInt(durasi)||1));return toISODate(d)}
 function formatDateForDb(value){
   if(!value)return'';
-  const isoOnly=/^\d{4}-\d{2}-\d{2}$/;
-  if(isoOnly.test(value))return value;
-  const parsed=new Date(value);
-  if(Number.isNaN(parsed.getTime()))return value;
-  return toISODate(parsed);
+  const parsed=parseDateFlexible(value);
+  if(!parsed)return String(value||'').trim();
+  return fmtDateIndonesia(parsed);
 }
 function formatItemList(){return cart.map(i=>`${i.name} x${i.qty}`).join(', ')}
 function isCartSheetOpen(){const s=document.getElementById('cartSheet');return !!(s&&s.classList.contains('open'))}
@@ -1113,5 +1111,4 @@ window.addEventListener('resize',()=>{
     applyFilter((document.getElementById('searchInput').value||'').toLowerCase());
   }
 });
-
 

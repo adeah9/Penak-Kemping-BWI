@@ -205,9 +205,25 @@ function normalizeOrderDateKey(value){
     const p=raw.split('/');
     return `${p[2]}-${p[1]}-${p[0]}`;
   }
+  const idLong = parseIndonesianLongDateToIso_(raw);
+  if(idLong)return idLong;
   const d2=new Date(raw);
   if(!Number.isNaN(d2.getTime()))return toISODate(d2);
   return '';
+}
+function parseIndonesianLongDateToIso_(raw){
+  const m=String(raw||'').trim().toLowerCase().match(/^(\d{1,2})\s+([a-z]+)\s+(\d{4})$/i);
+  if(!m)return'';
+  const monthMap={
+    januari:1,februari:2,maret:3,april:4,mei:5,juni:6,juli:7,agustus:8,september:9,oktober:10,november:11,desember:12
+  };
+  const day=Number(m[1]);
+  const month=monthMap[m[2].toLowerCase()];
+  const year=Number(m[3]);
+  if(!month || !day || !year)return'';
+  const d=new Date(year,month-1,day);
+  if(Number.isNaN(d.getTime()))return'';
+  return `${String(year)}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
 }
 function parseWaktuOrderMs(value){
   if(value===null || typeof value==='undefined')return 0;
@@ -227,6 +243,11 @@ function parseWaktuOrderMs(value){
   if(/^\d{4}-\d{2}-\d{2}$/.test(raw)){
     const dIso=new Date(`${raw}T00:00:00`);
     return Number.isNaN(dIso.getTime()) ? 0 : dIso.getTime();
+  }
+  const idIso=parseIndonesianLongDateToIso_(raw);
+  if(idIso){
+    const dId=new Date(`${idIso}T00:00:00`);
+    return Number.isNaN(dId.getTime()) ? 0 : dId.getTime();
   }
   const parsed=new Date(raw);
   return Number.isNaN(parsed.getTime()) ? 0 : parsed.getTime();
@@ -376,7 +397,7 @@ function updateAdminRecap(filteredRows){
     totalOmzet=sourceRows.reduce((sum,r)=>sum+(Number(r.total)||0),0);
     if(adminFilterState.mode==='month'){
       const labelMonth=/^\d{4}-\d{2}$/.test(adminFilterState.month)
-        ? new Date(Number(adminFilterState.month.slice(0,4)),Number(adminFilterState.month.slice(5,7))-1,1).toLocaleDateString('id-ID',{month:'short',year:'numeric'})
+        ? new Date(Number(adminFilterState.month.slice(0,4)),Number(adminFilterState.month.slice(5,7))-1,1).toLocaleDateString('id-ID',{month:'long',year:'numeric'})
         : adminFilterState.month;
       if(orderLabel)orderLabel.innerText=`Order ${labelMonth}`;
       if(omzetLabel)omzetLabel.innerText=`Omzet ${labelMonth}`;
@@ -409,23 +430,34 @@ function updateAdminRecap(filteredRows){
   document.getElementById('recapOrderActive').innerText=String(activeCount);
   document.getElementById('recapOrderDone').innerText=String(doneCount);
 }
+function parseDateFlexibleAdmin_(value){
+  if(value===null || typeof value==='undefined')return null;
+  if(Object.prototype.toString.call(value)==='[object Date]' && !Number.isNaN(value.getTime()))return value;
+  const raw=String(value).trim();
+  if(!raw)return null;
+  if(/^\d{4}-\d{2}-\d{2}$/.test(raw)){
+    const d=new Date(`${raw}T00:00:00`);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  if(/^\d{4}-\d{2}-\d{2}T/.test(raw)){
+    const d2=new Date(raw);
+    return Number.isNaN(d2.getTime()) ? null : d2;
+  }
+  if(/^\d{2}\/\d{2}\/\d{4}$/.test(raw)){
+    const p=raw.split('/');
+    const d3=new Date(Number(p[2]),Number(p[1])-1,Number(p[0]));
+    return Number.isNaN(d3.getTime()) ? null : d3;
+  }
+  const parsed=new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
 function formatDbDate(value){
   if(value===null || typeof value==='undefined') return '-';
   const raw=String(value).trim();
   if(!raw) return '-';
-
-  const isoDateOnly=/^\d{4}-\d{2}-\d{2}$/;
-  const isoLike=/^\d{4}-\d{2}-\d{2}T/;
-  let parsed=null;
-
-  if(isoDateOnly.test(raw)){
-    parsed=new Date(`${raw}T00:00:00`);
-  }else if(isoLike.test(raw)){
-    parsed=new Date(raw);
-  }
-
+  const parsed=parseDateFlexibleAdmin_(raw);
   if(parsed && !Number.isNaN(parsed.getTime())){
-    return parsed.toLocaleDateString('id-ID',{day:'2-digit',month:'2-digit',year:'numeric'});
+    return parsed.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
   }
   return raw;
 }
@@ -783,7 +815,7 @@ async function addManualOrder(){
     daftarItem:(document.getElementById('admDaftarItem').value||'').trim(),
     catatan:(document.getElementById('admCatatan').value||'').trim(),
     total:parseInt(document.getElementById('admTotal').value)||0,
-    waktuOrder:new Date().toLocaleDateString('id-ID'),
+    waktuOrder:formatDbDate(new Date()),
     status:document.getElementById('admStatus').value||'Baru'
   };
   try{

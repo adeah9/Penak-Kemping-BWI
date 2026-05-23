@@ -301,7 +301,28 @@ const WA_NUMBER_INTERNATIONAL = '';
 
 // --- UTILS ---
 const fmt = n => new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format(n);
-function fmtDateShort(s){if(!s)return'-';const d=new Date(s+'T00:00:00');return d.toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'})}
+function parseDateFlexible(value){
+  if(value===null || typeof value==='undefined')return null;
+  if(Object.prototype.toString.call(value)==='[object Date]' && !Number.isNaN(value.getTime()))return value;
+  const raw=String(value).trim();
+  if(!raw)return null;
+  if(/^\d{4}-\d{2}-\d{2}$/.test(raw)){
+    const d=new Date(`${raw}T00:00:00`);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  if(/^\d{2}\/\d{2}\/\d{4}$/.test(raw)){
+    const p=raw.split('/');
+    const d=new Date(Number(p[2]),Number(p[1])-1,Number(p[0]));
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  const parsed=new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+function fmtDateIndonesia(value){
+  const d=parseDateFlexible(value);
+  if(!d)return'-';
+  return d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+}
 function toast(msg){const t=document.getElementById('toast');document.getElementById('toastMsg').innerText=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function isGasConfigured(){return !!normalizeGasEndpointUrl(GAS_WEB_APP_URL)}
@@ -460,7 +481,7 @@ function buildCurrentOrderPayload(){
     durasi:dur,
     daftarItem:formatItemList(),
     total,
-    waktuOrder:new Date().toLocaleDateString('id-ID'),
+    waktuOrder:fmtDateIndonesia(new Date()),
     status:'Baru'
   };
 }
@@ -904,7 +925,7 @@ function hitungKembali(){
   if(tgl){
     const d=new Date(tgl+'T00:00:00');
     d.setDate(d.getDate()+dur);
-    const str=d.toLocaleDateString('id-ID',{weekday:'short',day:'numeric',month:'short',year:'numeric'});
+    const str=fmtDateIndonesia(d);
     document.getElementById('tglKembaliD').innerText=str;
     document.getElementById('tglKembaliM').innerText=str;
     document.getElementById('tglPesanM').value=tgl;
@@ -1013,13 +1034,13 @@ async function tampilRingkasan(){
     const dur=parseInt(document.getElementById('durasiSewa').value)||1;
     const kembali=document.getElementById('tglKembaliD').innerText;
 
-    document.getElementById('rcptDate').innerText=new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
+    document.getElementById('rcptDate').innerText=fmtDateIndonesia(new Date());
     document.getElementById('rcptNama').innerText=nama;
     document.getElementById('rcptWA').innerText=wa||'-';
     document.getElementById('rcptJaminan').innerText=jaminan||'-';
     const rcptNote=document.getElementById('rcptCatatan');
     if(rcptNote)rcptNote.innerText=catatan||'-';
-    document.getElementById('rcptAmbil').innerText=fmtDateShort(tgl);
+    document.getElementById('rcptAmbil').innerText=fmtDateIndonesia(tgl);
     document.getElementById('rcptKembali').innerText=kembali;
     document.getElementById('rcptDurasi').innerText=dur;
     document.getElementById('rcptDurRow').innerText=dur;
@@ -1071,7 +1092,7 @@ function kirimWA(){
   t+=`*WhatsApp:* ${wa||'-'}\n`;
   t+=`*Jaminan:* ${jaminan||'-'}\n`;
   if(catatan){t+=`*Catatan:* ${catatan}\n`;}
-  t+=`*Tgl Ambil:* ${fmtDateShort(tgl)}\n`;
+  t+=`*Tgl Ambil:* ${fmtDateIndonesia(tgl)}\n`;
   t+=`*Tgl Kembali:* ${kembali}\n`;
   t+=`*Durasi:* ${dur} Hari\n\n`;
   t+=`*Daftar Pesanan:*\n`;
@@ -1092,6 +1113,5 @@ window.addEventListener('resize',()=>{
     applyFilter((document.getElementById('searchInput').value||'').toLowerCase());
   }
 });
-
 
 

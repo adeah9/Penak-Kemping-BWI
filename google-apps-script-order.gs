@@ -249,18 +249,24 @@ function normalizeDateString_(value) {
   if (value === null || value === undefined || value === '') return '';
   const tz = Session.getScriptTimeZone() || 'Asia/Jakarta';
   if (Object.prototype.toString.call(value) === '[object Date]' && !isNaN(value.getTime())) {
-    return Utilities.formatDate(value, tz, 'yyyy-MM-dd');
+    return formatIndonesianLongDate_(value);
   }
   const raw = String(value).trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    const dIso = new Date(raw + 'T00:00:00');
+    if (!isNaN(dIso.getTime())) return formatIndonesianLongDate_(dIso);
+  }
   if (/^\d{4}-\d{2}-\d{2}T/.test(raw)) {
     const dIso = new Date(raw);
-    if (!isNaN(dIso.getTime())) return Utilities.formatDate(dIso, tz, 'yyyy-MM-dd');
+    if (!isNaN(dIso.getTime())) return formatIndonesianLongDate_(dIso);
   }
   if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
     const p = raw.split('/');
-    return `${p[2]}-${p[1]}-${p[0]}`;
+    const dLocal = new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]));
+    if (!isNaN(dLocal.getTime())) return formatIndonesianLongDate_(dLocal);
   }
+  const parsed = new Date(raw);
+  if (!isNaN(parsed.getTime())) return formatIndonesianLongDate_(parsed);
   return raw;
 }
 
@@ -276,6 +282,8 @@ function normalizeCellDateToIso_(value) {
     const p = raw.split('/');
     return `${p[2]}-${p[1]}-${p[0]}`;
   }
+  const idLongIso = parseIndonesianLongDateToIso_(raw);
+  if (idLongIso) return idLongIso;
   if (/^\d{4}-\d{2}-\d{2}T/.test(raw)) {
     const d = new Date(raw);
     if (!isNaN(d.getTime())) return Utilities.formatDate(d, tz, 'yyyy-MM-dd');
@@ -286,13 +294,17 @@ function normalizeCellDateToIso_(value) {
 function normalizeWaktuOrder_(value) {
   const tz = Session.getScriptTimeZone() || 'Asia/Jakarta';
   if (value === null || value === undefined || value === '') {
-    return Utilities.formatDate(new Date(), tz, 'dd/MM/yyyy');
+    return formatIndonesianLongDate_(new Date());
   }
   if (Object.prototype.toString.call(value) === '[object Date]' && !isNaN(value.getTime())) {
-    return Utilities.formatDate(value, tz, 'dd/MM/yyyy');
+    return formatIndonesianLongDate_(value);
   }
   const raw = String(value).trim();
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) return raw;
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+    const p = raw.split('/');
+    const d = new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]));
+    if (!isNaN(d.getTime())) return formatIndonesianLongDate_(d);
+  }
 
   const idLike = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:,\s*|\s+)?(\d{1,2})?[.:]?(\d{1,2})?[.:]?(\d{1,2})?$/);
   if (idLike) {
@@ -300,21 +312,49 @@ function normalizeWaktuOrder_(value) {
     const month = Number(idLike[2]);
     const year = Number(idLike[3]);
     const d = new Date(year, month - 1, day);
-    if (!isNaN(d.getTime())) return Utilities.formatDate(d, tz, 'dd/MM/yyyy');
+    if (!isNaN(d.getTime())) return formatIndonesianLongDate_(d);
   }
 
   if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
     const dIso = new Date(raw + 'T00:00:00');
-    if (!isNaN(dIso.getTime())) return Utilities.formatDate(dIso, tz, 'dd/MM/yyyy');
+    if (!isNaN(dIso.getTime())) return formatIndonesianLongDate_(dIso);
   }
   if (/^\d{4}-\d{2}-\d{2}T/.test(raw)) {
     const dIso2 = new Date(raw);
-    if (!isNaN(dIso2.getTime())) return Utilities.formatDate(dIso2, tz, 'dd/MM/yyyy');
+    if (!isNaN(dIso2.getTime())) return formatIndonesianLongDate_(dIso2);
+  }
+  const idLongIso = parseIndonesianLongDateToIso_(raw);
+  if (idLongIso) {
+    const dId = new Date(idLongIso + 'T00:00:00');
+    if (!isNaN(dId.getTime())) return formatIndonesianLongDate_(dId);
   }
 
   const parsed = new Date(raw);
-  if (!isNaN(parsed.getTime())) return Utilities.formatDate(parsed, tz, 'dd/MM/yyyy');
+  if (!isNaN(parsed.getTime())) return formatIndonesianLongDate_(parsed);
   return raw.split(',')[0].trim();
+}
+
+function formatIndonesianLongDate_(dateObj) {
+  const tz = Session.getScriptTimeZone() || 'Asia/Jakarta';
+  const day = String(Number(Utilities.formatDate(dateObj, tz, 'd')));
+  const month = Utilities.formatDate(dateObj, tz, 'MMMM');
+  const year = Utilities.formatDate(dateObj, tz, 'yyyy');
+  return `${day} ${month} ${year}`;
+}
+
+function parseIndonesianLongDateToIso_(raw) {
+  const text = String(raw || '').trim().toLowerCase();
+  const m = text.match(/^(\d{1,2})\s+([a-z]+)\s+(\d{4})$/i);
+  if (!m) return '';
+  const monthMap = {
+    januari: 1, februari: 2, maret: 3, april: 4, mei: 5, juni: 6,
+    juli: 7, agustus: 8, september: 9, oktober: 10, november: 11, desember: 12
+  };
+  const day = Number(m[1]);
+  const month = monthMap[m[2]];
+  const year = Number(m[3]);
+  if (!day || !month || !year) return '';
+  return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
 }
 
 function sanitizeWaktuOrderColumn_(sh) {
@@ -330,6 +370,23 @@ function sanitizeWaktuOrderColumn_(sh) {
     return [normalized];
   });
   if (changed) range.setValues(next);
+}
+
+function sanitizeTanggalColumns_(sh) {
+  const lastRow = sh.getLastRow();
+  if (lastRow < 2) return;
+  [5, 6].forEach(function (colIdx) {
+    const range = sh.getRange(2, colIdx, lastRow - 1, 1);
+    const values = range.getValues();
+    let changed = false;
+    const next = values.map(function (r) {
+      const current = r[0];
+      const normalized = normalizeDateString_(current);
+      if (String(current || '') !== String(normalized || '')) changed = true;
+      return [normalized];
+    });
+    if (changed) range.setValues(next);
+  });
 }
 
 function isSimpleOrderCode_(value) {
@@ -420,6 +477,7 @@ function createOrUpsertOrder_(order) {
   validateOrder_(order);
   const sh = getOrdersSheet_();
   sanitizeInternalIdColumn_(sh);
+  sanitizeTanggalColumns_(sh);
   const providedId = normalizeInternalOrderId_(order.noPesanan || order.id || '');
   const targetRow = providedId ? findRowByNoPesanan_(sh, providedId) : -1;
   const internalId = targetRow > 0
@@ -439,6 +497,7 @@ function createOrUpsertOrder_(order) {
 function listOrders_() {
   const sh = getOrdersSheet_();
   sanitizeInternalIdColumn_(sh);
+  sanitizeTanggalColumns_(sh);
   sanitizeWaktuOrderColumn_(sh);
   const lastRow = sh.getLastRow();
   if (lastRow < 2) return { success: true, data: [] };
@@ -507,7 +566,7 @@ function updateStock_(itemId, itemName, status) {
   const sh = getStockSheet_();
   const row = findRowById_(sh, id, 1);
   const normalized = normalizeStockStatus_(status);
-  const nowText = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Asia/Jakarta', 'dd/MM/yyyy, HH.mm.ss');
+  const nowText = formatIndonesianLongDate_(new Date());
 
   if (row > 0) {
     sh.getRange(row, 1, 1, STOCK_HEADERS.length).setValues([[id, itemName || '', normalized, nowText]]);

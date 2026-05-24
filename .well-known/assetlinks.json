@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.penakkemping.app",
+      "sha256_cert_fingerprints": [
+        "B1:6C:F5:99:E9:CB:9C:81:CD:73:1F:32:D1:C7:1A:7E:09:D9:DF:E1:73:57:C9:C5:D4:1C:FA:07:55:2F:2A:C4"
+      ]
+    }
+  }
+]

@@ -286,7 +286,7 @@ const ADMIN_TOKEN_KEY = 'penak_admin_token';
 const ORDER_STATUS = ['Baru','Diproses','Diambil','Selesai','Cancel'];
 const STOCK_STATUS = ['tersedia','habis','maintenance'];
 const WA_NUMBER_DISPLAY = '081333758178';
-const WA_NUMBER_INTERNATIONAL = '6281333758178';
+const WA_NUMBER_INTERNATIONAL = '';
 
 // --- UTILS ---
 const fmt = n => new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format(n);

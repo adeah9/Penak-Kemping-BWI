@@ -263,7 +263,7 @@ const animatedItemIds = new Set();
 const CATALOG_INITIAL_ROWS = 5;
 
 const GAS_WEB_APP_URL_KEY = 'PKB_GAS_WEB_APP_URL';
-const GAS_WEB_APP_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbwzi85AaJ_q7woTpgdCoha5CpQlz-hal6aRIvQyhCJ5uCZ_guDvTxGxWhkEkCGuBcjW/exec';
+const GAS_WEB_APP_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbwqhxBWdJzHtdj2qXFKrVNBka9sbSWZbWfH5YJzx874Znc3u0xe73-99jE98Pcu9KSn/exec';
 function normalizeGasEndpointUrl(url){
   const raw=String(url||'').trim();
   if(!raw)return'';
@@ -272,7 +272,7 @@ function normalizeGasEndpointUrl(url){
   return raw;
 }
 // Bisa dioverride sementara via:
-// localStorage.setItem('PKB_GAS_WEB_APP_URL', 'https://script.google.com/macros/s/AKfycbwzi85AaJ_q7woTpgdCoha5CpQlz-hal6aRIvQyhCJ5uCZ_guDvTxGxWhkEkCGuBcjW/exec')
+// localStorage.setItem('PKB_GAS_WEB_APP_URL', 'https://script.google.com/macros/s/AKfycbwU_dAaorkyN7WRdWru9dBcYyhu7v5U8nMVJzrtKkkWSRDvyEAlnYL1g6cGOnpWw11C/exec')
 const GAS_WEB_APP_URL_OVERRIDE_RAW = localStorage.getItem(GAS_WEB_APP_URL_KEY)||'';
 const GAS_WEB_APP_URL_OVERRIDE = normalizeGasEndpointUrl(GAS_WEB_APP_URL_OVERRIDE_RAW);
 if(GAS_WEB_APP_URL_OVERRIDE_RAW && !GAS_WEB_APP_URL_OVERRIDE){

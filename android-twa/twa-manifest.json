@@ -1,7 +1,7 @@
 {
-  "packageId": "app.vercel.penakkempingg.twa",
+  "packageId": "com.penakkemping.app",
   "host": "penakkempingg.vercel.app",
-  "name": "Pekak Kemping",
+  "name": "PenakKemping",
   "launcherName": "PenakKemping",
   "display": "standalone",
   "themeColor": "#C8102E",
@@ -20,8 +20,8 @@
     "path": "C:\\Users\\adeah\\OneDrive\\Documents\\PenakK\\android-twa\\android.keystore",
     "alias": "android"
   },
-  "appVersionName": "1",
-  "appVersionCode": 1,
+  "appVersionName": "2",
+  "appVersionCode": 2,
   "shortcuts": [],
   "generatorApp": "bubblewrap-cli",
   "webManifestUrl": "https://penakkempingg.vercel.app/manifest.json",
@@ -36,12 +36,16 @@
   "fullScopeUrl": "https://penakkempingg.vercel.app/",
   "minSdkVersion": 21,
   "orientation": "portrait",
-  "fingerprints": [],
+  "fingerprints": [
+    {
+      "value": "B1:6C:F5:99:E9:CB:9C:81:CD:73:1F:32:D1:C7:1A:7E:09:D9:DF:E1:73:57:C9:C5:D4:1C:FA:07:55:2F:2A:C4"
+    }
+  ],
   "additionalTrustedOrigins": [],
   "retainedBundles": [],
   "protocolHandlers": [],
   "fileHandlers": [],
   "launchHandlerClientMode": "",
   "displayOverride": [],
-  "appVersion": "1"
+  "appVersion": "2"
 }

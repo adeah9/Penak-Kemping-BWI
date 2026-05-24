@@ -525,38 +525,8 @@
 </div>
 <div class="toast" id="toast"><i class="fas fa-circle-check"></i><span id="toastMsg">-</span></div>
 
-<script>
-  // Fallback handler for cached onclick references from older HTML/JS versions.
-  window.__pkbAdminLoginBridge = window.__pkbAdminLoginBridge || function () {
-    if (typeof window.submitAdminLogin === 'function') return window.submitAdminLogin();
-    if (typeof window.toast === 'function') window.toast('Script admin belum termuat. Refresh dulu (Ctrl+F5).');
-  };
-  window.loginAdminIn_ = window.loginAdminIn_ || window.__pkbAdminLoginBridge;
-  window.loginAdminIn = window.loginAdminIn || window.__pkbAdminLoginBridge;
-  window.loginAdmin = window.loginAdmin || window.__pkbAdminLoginBridge;
-  window.loginAdminin_ = window.loginAdminin_ || window.__pkbAdminLoginBridge;
-  window.loginAdminin = window.loginAdminin || window.__pkbAdminLoginBridge;
-  // Force-bind login actions to prevent stale inline handler names from cache.
-  (function () {
-    var loginBtn = document.querySelector('#modalAdminLogin .btn-print-act');
-    if (loginBtn) {
-      loginBtn.onclick = function (ev) {
-        if (ev && typeof ev.preventDefault === 'function') ev.preventDefault();
-        return window.__pkbAdminLoginBridge();
-      };
-    }
-    var passInput = document.getElementById('adminPassword');
-    if (passInput) {
-      passInput.onkeydown = function (ev) {
-        if (ev && ev.key === 'Enter') {
-          if (typeof ev.preventDefault === 'function') ev.preventDefault();
-          return window.__pkbAdminLoginBridge();
-        }
-      };
-    }
-  })();
-</script>
 <script src="script.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>
+

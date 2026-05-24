@@ -1,18 +1,4 @@
-﻿// Compatibility shim for cached inline handlers from older HTML versions.
-window.loginAdminIn_ = function () {
-  if (typeof window.submitAdminLogin === 'function') {
-    return window.submitAdminLogin();
-  }
-  if (typeof window.toast === 'function') {
-    window.toast('Script admin belum termuat. Coba refresh (Ctrl+F5).');
-  }
-};
-window.loginAdminIn = window.loginAdminIn_;
-window.loginAdmin = window.loginAdminIn_;
-window.loginAdminin_ = window.loginAdminIn_;
-window.loginAdminin = window.loginAdminIn_;
-
-// --- DATA ---
+﻿// --- DATA ---
 
 const ITEMS_SATUAN = [
   {id:'i001',name:'Tenda 2 Layer 4-5P Tendaki Borneo Black',price:40000,cat:'Tenda',desc:'Kapasitas 4-5 orang'},
@@ -75,7 +61,7 @@ const ITEMS_SATUAN = [
   {id:'i053',name:'UPS Reflective Camo',price:15000,cat:'Celana',desc:''},
   {id:'i054',name:'Celana Credifox',price:15000,cat:'Celana',desc:''},
 
-  {id:'i055',name:'Kupluk Arc’',price:8000,cat:'Topi / Kupluk',desc:''},
+  {id:'i055',name:'Kupluk Arc�',price:8000,cat:'Topi / Kupluk',desc:''},
   {id:'i056',name:'Kupluk Bintang',price:5000,cat:'Topi / Kupluk',desc:''},
   {id:'i057',name:'Kupluk Penak Kemping',price:5000,cat:'Topi / Kupluk',desc:''},
   {id:'i058',name:'Kupluk Spiderman',price:5000,cat:'Topi / Kupluk',desc:''},
@@ -286,7 +272,7 @@ function normalizeGasEndpointUrl(url){
   return raw;
 }
 // Bisa dioverride sementara via:
-// localStorage.setItem('PKB_GAS_WEB_APP_URL', 'https://script.google.com/macros/s/AKfycbyj-WiQrBU2BFof8IfvIpfHSOkzjfgRUBhs84yL2v0vCqKNgQzLWe_tvIvBzDRYg6Vr/exec')
+// localStorage.setItem('PKB_GAS_WEB_APP_URL', 'https://script.google.com/macros/s/AKfycbwzi85AaJ_q7woTpgdCoha5CpQlz-hal6aRIvQyhCJ5uCZ_guDvTxGxWhkEkCGuBcjW/exec')
 const GAS_WEB_APP_URL_OVERRIDE_RAW = localStorage.getItem(GAS_WEB_APP_URL_KEY)||'';
 const GAS_WEB_APP_URL_OVERRIDE = normalizeGasEndpointUrl(GAS_WEB_APP_URL_OVERRIDE_RAW);
 if(GAS_WEB_APP_URL_OVERRIDE_RAW && !GAS_WEB_APP_URL_OVERRIDE){
@@ -296,8 +282,8 @@ const GAS_WEB_APP_URL = GAS_WEB_APP_URL_OVERRIDE || GAS_WEB_APP_URL_DEFAULT;
 const ADMIN_TOKEN_KEY = 'penak_admin_token';
 const ORDER_STATUS = ['Baru','Diproses','Diambil','Selesai','Cancel'];
 const STOCK_STATUS = ['tersedia','habis','maintenance'];
-const WA_NUMBER_DISPLAY = '081553610148';
-const WA_NUMBER_INTERNATIONAL = '';
+const WA_NUMBER_DISPLAY = '081333758178';
+const WA_NUMBER_INTERNATIONAL = '6281333758178';
 
 // --- UTILS ---
 const fmt = n => new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format(n);
@@ -323,7 +309,14 @@ function fmtDateIndonesia(value){
   if(!d)return'-';
   return d.toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'});
 }
-function toast(msg){const t=document.getElementById('toast');document.getElementById('toastMsg').innerText=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2600)}
+function toast(msg){
+  const t=document.getElementById('toast');
+  const msgEl=document.getElementById('toastMsg');
+  if(!t || !msgEl) return;
+  msgEl.innerText=msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2600);
+}
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function isGasConfigured(){return !!normalizeGasEndpointUrl(GAS_WEB_APP_URL)}
 function toISODate(dateObj){
@@ -343,8 +336,10 @@ function formatDateForDb(value){
 function formatItemList(){return cart.map(i=>`${i.name} x${i.qty}`).join(', ')}
 function isCartSheetOpen(){const s=document.getElementById('cartSheet');return !!(s&&s.classList.contains('open'))}
 function getSyncedValue(desktopId,mobileId){
-  const desktop=(document.getElementById(desktopId).value||'').trim();
-  const mobile=(document.getElementById(mobileId).value||'').trim();
+  const desktopEl=document.getElementById(desktopId);
+  const mobileEl=document.getElementById(mobileId);
+  const desktop=(desktopEl?.value||'').trim();
+  const mobile=(mobileEl?.value||'').trim();
   return isCartSheetOpen() ? (mobile||desktop) : (desktop||mobile);
 }
 function getNamaPemesan(){return getSyncedValue('namaPemesan','namaPesananM')}
@@ -1031,7 +1026,44 @@ async function tampilRingkasan(){
   const wa=getWaPemesan();
   const jaminan=getJaminanPemesan();
   const catatan=getCatatanPemesan();
-  if(!nama){toast('Nama pemesan wajib diisi');return}
+  
+  // Validasi nama
+  if(!nama || nama.trim().length < 3){
+    toast('Nama minimal 3 karakter');
+    return;
+  }
+  if(nama.length > 100){
+    toast('Nama maksimal 100 karakter');
+    return;
+  }
+  
+  // Validasi WhatsApp jika diisi
+  if(wa && !/^(08|62)[0-9]{8,12}$/.test(wa.replace(/\D/g, ''))){
+    toast('Nomor WhatsApp tidak valid (08xxx atau 62xxx)');
+    return;
+  }
+  
+  // Validasi durasi
+  const dur = parseInt(document.getElementById('durasiSewa').value)||1;
+  if(dur < 1 || dur > 365 || isNaN(dur)){
+    toast('Durasi harus 1-365 hari');
+    return;
+  }
+  
+  // Validasi tanggal
+  const tgl=document.getElementById('tglPesan').value;
+  if(!tgl){
+    toast('Tanggal ambil wajib diisi');
+    return;
+  }
+  const tglDate = new Date(tgl+'T00:00:00');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if(tglDate < today){
+    toast('Tanggal ambil tidak boleh di masa lalu');
+    return;
+  }
+  
   if(cart.length===0){toast('Pilih minimal 1 item terlebih dahulu');return}
   isSubmittingOrder=true;
   setSubmitLoading(true);

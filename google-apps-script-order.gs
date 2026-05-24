@@ -24,7 +24,22 @@ const ADMIN_PASSWORD_PROP = 'ADMIN_PASSWORD';
 const ADMIN_TOKEN_PROP = 'ADMIN_TOKEN';
 const ADMIN_TOKEN_EXP_PROP = 'ADMIN_TOKEN_EXPIRES_AT';
 const ADMIN_TOKEN_TTL_SEC = 12 * 60 * 60;
-const DEBUG_LOG = true;
+const DEBUG_LOG = false;
+const MONTHS_ID = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+const MONTH_TOKEN_MAP = {
+  januari: 1, jan: 1,
+  februari: 2, feb: 2,
+  maret: 3, mar: 3,
+  april: 4, apr: 4,
+  mei: 5, may: 5,
+  juni: 6, jun: 6,
+  juli: 7, jul: 7,
+  agustus: 8, ags: 8, agu: 8, aug: 8,
+  september: 9, sep: 9, sept: 9,
+  oktober: 10, okt: 10, oct: 10,
+  november: 11, nov: 11,
+  desember: 12, des: 12, dec: 12
+};
 
 function doGet(e) {
   return handleRequest_(e || {});
@@ -265,113 +280,116 @@ function normalizeStockStatus_(value) {
   return 'tersedia';
 }
 
-function normalizeDateString_(value) {
-  if (value === null || value === undefined || value === '') return '';
+function monthTokenToNumber_(token) {
+  const key = String(token || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z]/g, '');
+  return MONTH_TOKEN_MAP[key] || 0;
+}
+
+function parseDateInput_(value) {
+  if (value === null || value === undefined || value === '') return null;
   const tz = Session.getScriptTimeZone() || 'Asia/Jakarta';
   if (Object.prototype.toString.call(value) === '[object Date]' && !isNaN(value.getTime())) {
-    return formatIndonesianLongDate_(value);
+    const y = Number(Utilities.formatDate(value, tz, 'yyyy'));
+    const m = Number(Utilities.formatDate(value, tz, 'M'));
+    const d = Number(Utilities.formatDate(value, tz, 'd'));
+    return new Date(y, m - 1, d);
   }
+
   const raw = String(value).trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-    const dIso = new Date(raw + 'T00:00:00');
-    if (!isNaN(dIso.getTime())) return formatIndonesianLongDate_(dIso);
+  if (!raw) return null;
+
+  // YYYY-MM-DD / YYYY-MM-DDTHH:mm:ss
+  let m = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[T\s](\d{1,2})(?::(\d{1,2}))?(?::(\d{1,2}))?)?/);
+  if (m) {
+    const yy = Number(m[1]);
+    const mm = Number(m[2]);
+    const dd = Number(m[3]);
+    const hh = Number(m[4] || 0);
+    const mi = Number(m[5] || 0);
+    const ss = Number(m[6] || 0);
+    return new Date(yy, mm - 1, dd, hh, mi, ss);
   }
-  if (/^\d{4}-\d{2}-\d{2}T/.test(raw)) {
-    const dIso = new Date(raw);
-    if (!isNaN(dIso.getTime())) return formatIndonesianLongDate_(dIso);
+
+  // DD/MM/YYYY (opsional waktu)
+  m = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:,\s*|\s+)?(\d{1,2})?[.:]?(\d{1,2})?[.:]?(\d{1,2})?$/);
+  if (m) {
+    const dd = Number(m[1]);
+    const mm = Number(m[2]);
+    const yy = Number(m[3]);
+    const hh = Number(m[4] || 0);
+    const mi = Number(m[5] || 0);
+    const ss = Number(m[6] || 0);
+    return new Date(yy, mm - 1, dd, hh, mi, ss);
   }
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
-    const p = raw.split('/');
-    const dLocal = new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]));
-    if (!isNaN(dLocal.getTime())) return formatIndonesianLongDate_(dLocal);
+
+  // DD NamaBulan YYYY (Indonesia/English) + opsional waktu
+  m = raw.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})(?:,\s*|\s+)?(\d{1,2})?[.:]?(\d{1,2})?[.:]?(\d{1,2})?$/);
+  if (m) {
+    const dd = Number(m[1]);
+    const mm = monthTokenToNumber_(m[2]);
+    const yy = Number(m[3]);
+    const hh = Number(m[4] || 0);
+    const mi = Number(m[5] || 0);
+    const ss = Number(m[6] || 0);
+    if (mm > 0) return new Date(yy, mm - 1, dd, hh, mi, ss);
   }
+
+  // Last fallback for uncommon legacy format.
   const parsed = new Date(raw);
-  if (!isNaN(parsed.getTime())) return formatIndonesianLongDate_(parsed);
-  return raw;
+  if (!isNaN(parsed.getTime())) return parsed;
+  return null;
+}
+
+function toIsoDateFromDate_(dateObj) {
+  if (!dateObj || isNaN(dateObj.getTime())) return '';
+  const tz = Session.getScriptTimeZone() || 'Asia/Jakarta';
+  const y = Utilities.formatDate(dateObj, tz, 'yyyy');
+  const m = Utilities.formatDate(dateObj, tz, 'MM');
+  const d = Utilities.formatDate(dateObj, tz, 'dd');
+  return `${y}-${m}-${d}`;
+}
+
+function normalizeDateString_(value) {
+  const parsed = parseDateInput_(value);
+  if (!parsed) return String(value || '').trim();
+  return formatIndonesianLongDate_(parsed);
 }
 
 function normalizeCellDateToIso_(value) {
-  if (value === null || value === undefined || value === '') return '';
-  const tz = Session.getScriptTimeZone() || 'Asia/Jakarta';
-  if (Object.prototype.toString.call(value) === '[object Date]' && !isNaN(value.getTime())) {
-    return Utilities.formatDate(value, tz, 'yyyy-MM-dd');
-  }
-  const raw = String(value).trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) return raw;
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
-    const p = raw.split('/');
-    return `${p[2]}-${p[1]}-${p[0]}`;
-  }
-  const idLongIso = parseIndonesianLongDateToIso_(raw);
-  if (idLongIso) return idLongIso;
-  if (/^\d{4}-\d{2}-\d{2}T/.test(raw)) {
-    const d = new Date(raw);
-    if (!isNaN(d.getTime())) return Utilities.formatDate(d, tz, 'yyyy-MM-dd');
-  }
-  return raw;
+  const parsed = parseDateInput_(value);
+  if (!parsed) return '';
+  return toIsoDateFromDate_(parsed);
 }
 
 function normalizeWaktuOrder_(value) {
-  const tz = Session.getScriptTimeZone() || 'Asia/Jakarta';
   if (value === null || value === undefined || value === '') {
     return formatIndonesianLongDate_(new Date());
   }
-  if (Object.prototype.toString.call(value) === '[object Date]' && !isNaN(value.getTime())) {
-    return formatIndonesianLongDate_(value);
-  }
-  const raw = String(value).trim();
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
-    const p = raw.split('/');
-    const d = new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]));
-    if (!isNaN(d.getTime())) return formatIndonesianLongDate_(d);
-  }
-
-  const idLike = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:,\s*|\s+)?(\d{1,2})?[.:]?(\d{1,2})?[.:]?(\d{1,2})?$/);
-  if (idLike) {
-    const day = Number(idLike[1]);
-    const month = Number(idLike[2]);
-    const year = Number(idLike[3]);
-    const d = new Date(year, month - 1, day);
-    if (!isNaN(d.getTime())) return formatIndonesianLongDate_(d);
-  }
-
-  if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-    const dIso = new Date(raw + 'T00:00:00');
-    if (!isNaN(dIso.getTime())) return formatIndonesianLongDate_(dIso);
-  }
-  if (/^\d{4}-\d{2}-\d{2}T/.test(raw)) {
-    const dIso2 = new Date(raw);
-    if (!isNaN(dIso2.getTime())) return formatIndonesianLongDate_(dIso2);
-  }
-  const idLongIso = parseIndonesianLongDateToIso_(raw);
-  if (idLongIso) {
-    const dId = new Date(idLongIso + 'T00:00:00');
-    if (!isNaN(dId.getTime())) return formatIndonesianLongDate_(dId);
-  }
-
-  const parsed = new Date(raw);
-  if (!isNaN(parsed.getTime())) return formatIndonesianLongDate_(parsed);
-  return raw.split(',')[0].trim();
+  const parsed = parseDateInput_(value);
+  if (!parsed) return String(value || '').split(',')[0].trim();
+  return formatIndonesianLongDate_(parsed);
 }
 
 function formatIndonesianLongDate_(dateObj) {
+  const normalized = parseDateInput_(dateObj);
+  if (!normalized) return '';
   const tz = Session.getScriptTimeZone() || 'Asia/Jakarta';
-  const day = String(Number(Utilities.formatDate(dateObj, tz, 'd')));
-  const month = Utilities.formatDate(dateObj, tz, 'MMMM');
-  const year = Utilities.formatDate(dateObj, tz, 'yyyy');
+  const day = String(Number(Utilities.formatDate(normalized, tz, 'd')));
+  const monthIdx = Number(Utilities.formatDate(normalized, tz, 'M')) - 1;
+  const month = MONTHS_ID[monthIdx] || '';
+  const year = Utilities.formatDate(normalized, tz, 'yyyy');
   return `${day} ${month} ${year}`;
 }
 
 function parseIndonesianLongDateToIso_(raw) {
-  const text = String(raw || '').trim().toLowerCase();
-  const m = text.match(/^(\d{1,2})\s+([a-z]+)\s+(\d{4})$/i);
+  const text = String(raw || '').trim();
+  const m = text.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})$/i);
   if (!m) return '';
-  const monthMap = {
-    januari: 1, februari: 2, maret: 3, april: 4, mei: 5, juni: 6,
-    juli: 7, agustus: 8, september: 9, oktober: 10, november: 11, desember: 12
-  };
   const day = Number(m[1]);
-  const month = monthMap[m[2]];
+  const month = monthTokenToNumber_(m[2]);
   const year = Number(m[3]);
   if (!day || !month || !year) return '';
   return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -477,29 +495,8 @@ function sanitizeKodePesananColumn_(sh) {
 }
 
 function parseWaktuOrderForSortMs_(value) {
-  if (value === null || value === undefined || value === '') return 0;
-  if (Object.prototype.toString.call(value) === '[object Date]' && !isNaN(value.getTime())) {
-    return value.getTime();
-  }
-  var raw = String(value).trim();
-  if (!raw) return 0;
-  var idLike = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:,\s*|\s+)?(\d{1,2})?[.:]?(\d{1,2})?[.:]?(\d{1,2})?$/);
-  if (idLike) {
-    var day = Number(idLike[1]);
-    var month = Number(idLike[2]);
-    var year = Number(idLike[3]);
-    var hour = Number(idLike[4] || 0);
-    var min = Number(idLike[5] || 0);
-    var sec = Number(idLike[6] || 0);
-    var d = new Date(year, month - 1, day, hour, min, sec);
-    return isNaN(d.getTime()) ? 0 : d.getTime();
-  }
-  if (/^\d{4}-\d{2}-\d{2}T/.test(raw) || /^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-    var p = new Date(raw);
-    return isNaN(p.getTime()) ? 0 : p.getTime();
-  }
-  var parsed = new Date(raw);
-  return isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+  const parsed = parseDateInput_(value);
+  return parsed && !isNaN(parsed.getTime()) ? parsed.getTime() : 0;
 }
 
 function sortOrdersSheet_(sh) {
@@ -508,11 +505,17 @@ function sortOrdersSheet_(sh) {
   if (lastRow < 3) return;
   var rowCount = lastRow - 1;
   var values = sheet.getRange(2, 1, rowCount, ORDER_HEADERS.length).getValues();
+  values = values.map(function (r) {
+    var next = r.slice();
+    next[4] = normalizeDateString_(next[4]); // tanggal ambil
+    next[5] = normalizeDateString_(next[5]); // tanggal kembali
+    next[9] = normalizeWaktuOrder_(next[9]); // waktu order (tanggal)
+    return next;
+  });
   values.sort(function (a, b) {
-    var aAmbil = normalizeCellDateToIso_(a[4]);
-    var bAmbil = normalizeCellDateToIso_(b[4]);
-    var ambilCmp = String(bAmbil || '').localeCompare(String(aAmbil || ''));
-    if (ambilCmp !== 0) return ambilCmp;
+    var aAmbilMs = parseWaktuOrderForSortMs_(a[4]);
+    var bAmbilMs = parseWaktuOrderForSortMs_(b[4]);
+    if (aAmbilMs !== bAmbilMs) return bAmbilMs - aAmbilMs;
     var aWaktu = parseWaktuOrderForSortMs_(a[9]);
     var bWaktu = parseWaktuOrderForSortMs_(b[9]);
     if (aWaktu !== bWaktu) return bWaktu - aWaktu;
@@ -571,6 +574,7 @@ function listOrders_() {
   sanitizeKodePesananColumn_(sh);
   sanitizeTanggalColumns_(sh);
   sanitizeWaktuOrderColumn_(sh);
+  sortOrdersSheet_(sh);
   const lastRow = sh.getLastRow();
   if (lastRow < 2) return { success: true, data: [] };
 
@@ -585,8 +589,8 @@ function listOrders_() {
         nama: r[1],
         whatsapp: r[2],
         jaminan: r[3],
-        tanggalAmbil: normalizeCellDateToIso_(r[4]),
-        tanggalKembali: normalizeCellDateToIso_(r[5]),
+        tanggalAmbil: normalizeDateString_(r[4]),
+        tanggalKembali: normalizeDateString_(r[5]),
         durasi: r[6],
         daftarItem: r[7],
         total: r[8],

@@ -128,6 +128,7 @@ async function submitAdminLogin(){
     return;
   }catch(err){
     debugLoginLog('login_error',{message:err && err.message ? err.message : String(err)});
+    document.getElementById('adminPassword').value='';
     toast(normalizeApiMessage(err.message||'Username / password admin salah'));
   }
 }
@@ -277,7 +278,6 @@ function hasOrderFilter(stateObj){
   if((s.mode||'date')==='month')return !!s.month;
   return !!s.date;
 }
-function hasAnyAdminFilter(stateObj){return hasOrderFilter(stateObj);}
 function setAdminFilterMode(mode){
   if(mode==='month'){
     adminFilterDraft.mode='month';
@@ -345,16 +345,9 @@ function applyAdminOrderFilters(rows){
   list.sort(compareOrderRows);
   return list;
 }
-function renderAdminPeriodMeta(filtered,total){
-  const el=document.getElementById('adminPeriodMeta');
-  if(!el)return;
-  el.innerText='';
-  el.style.display='none';
-}
 function refreshAdminOrderView(){
   const filtered=applyAdminOrderFilters(adminOrdersAll);
   renderAdminOrders(filtered);
-  renderAdminPeriodMeta(filtered,adminOrdersAll.length);
   updateAdminRecap(filtered);
 }
 function resetAdminFilters(){

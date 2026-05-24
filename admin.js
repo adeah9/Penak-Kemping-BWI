@@ -6,6 +6,7 @@ let adminFilterDraft = {mode:'all',date:'',month:'',sort:'date_desc'};
 let adminStockSnapshot = {};
 let pendingStockChanges = {};
 let stockSearchKeyword = '';
+let adminStatusPending = new Set();
 const DEBUG_LOGIN_FLOW = (location.hostname==='127.0.0.1' || location.hostname==='localhost' || location.hostname==='::1');
 
 function debugLoginLog(step, data){
@@ -144,20 +145,15 @@ async function submitAdminLogin(){
 }
 window.submitAdminLogin = submitAdminLogin;
 // Backward compatibility for cached HTML/JS that still calls old login handler names.
-function loginAdminIn_(){
-  return submitAdminLogin();
+function registerLegacyLoginAliases(){
+  const bridge=()=>submitAdminLogin();
+  window.loginAdminIn_ = bridge;
+  window.loginAdminIn = bridge;
+  window.loginAdmin = bridge;
+  window.loginAdminin_ = bridge;
+  window.loginAdminin = bridge;
 }
-function loginAdminIn(){
-  return submitAdminLogin();
-}
-function loginAdmin(){
-  return submitAdminLogin();
-}
-window.loginAdminIn_ = loginAdminIn_;
-window.loginAdminIn = loginAdminIn;
-window.loginAdmin = loginAdmin;
-window.loginAdminin_ = loginAdminIn_;
-window.loginAdminin = loginAdminIn;
+registerLegacyLoginAliases();
 function resetAdminForm(){
   const today=toISODate(new Date());
   document.getElementById('admNama').value='';
@@ -396,10 +392,44 @@ function updateAdminRecap(filteredRows){
     return s!=='selesai' && s!=='cancel';
   }).length;
   const doneCount = sourceRows.filter(r=>String(r.status||'').toLowerCase()==='selesai').length;
+  const baruCount = sourceRows.filter(r=>String(r.status||'').toLowerCase()==='baru').length;
+  const diprosesCount = sourceRows.filter(r=>String(r.status||'').toLowerCase()==='diproses').length;
+  const diambilCount = sourceRows.filter(r=>String(r.status||'').toLowerCase()==='diambil').length;
+  const cancelCount = sourceRows.filter(r=>String(r.status||'').toLowerCase()==='cancel').length;
   document.getElementById('recapOrderToday').innerText=String(totalOrder);
   document.getElementById('recapOmzetToday').innerText=fmt(totalOmzet);
   document.getElementById('recapOrderActive').innerText=String(activeCount);
   document.getElementById('recapOrderDone').innerText=String(doneCount);
+  const recapBaru=document.getElementById('recapStatusBaru');
+  const recapDiproses=document.getElementById('recapStatusDiproses');
+  const recapDiambil=document.getElementById('recapStatusDiambil');
+  const recapCancel=document.getElementById('recapStatusCancel');
+  if(recapBaru)recapBaru.innerText=String(baruCount);
+  if(recapDiproses)recapDiproses.innerText=String(diprosesCount);
+  if(recapDiambil)recapDiambil.innerText=String(diambilCount);
+  if(recapCancel)recapCancel.innerText=String(cancelCount);
+}
+function renderAdminOrdersLoading(){
+  const body=document.getElementById('adminOrdersBody');
+  const mobileWrap=document.getElementById('adminOrdersMobile');
+  if(body){
+    body.innerHTML='<tr><td colspan="8" class="admin-empty">Memuat data order...</td></tr>';
+  }
+  if(mobileWrap){
+    mobileWrap.innerHTML=`
+      <div class="admin-loading-list">
+        <div class="admin-loading-item"></div>
+        <div class="admin-loading-item"></div>
+        <div class="admin-loading-item"></div>
+      </div>
+    `;
+  }
+}
+function getAdminOrdersEmptyMessage(){
+  const mode=(adminFilterState && adminFilterState.mode) ? adminFilterState.mode : 'all';
+  if(mode==='month')return 'Belum ada order pada bulan yang dipilih.';
+  if(mode==='date')return 'Belum ada order pada tanggal yang dipilih.';
+  return 'Belum ada data order.';
 }
 function parseDateFlexibleAdmin_(value){
   if(value===null || typeof value==='undefined')return null;
@@ -672,7 +702,8 @@ async function loadOrdersFromSheet(){
     refreshAdminOrderView();
     return;
   }
-  setAdminMeta('Memuat data order...');
+  setAdminMeta('Memuat data order terbaru...');
+  renderAdminOrdersLoading();
   try{
     const resp=await jsonpRequest({action:'list'});
     const rows=(resp.data||[]).map(normalizeOrderRow);
@@ -684,17 +715,18 @@ async function loadOrdersFromSheet(){
   }catch(err){
     adminOrdersAll=[];
     refreshAdminOrderView();
-    setAdminMeta(`Gagal memuat data: ${err.message}`);
-    toast('Gagal memuat database order');
+    setAdminMeta(`Gagal memuat data: ${normalizeApiMessage(err.message)}`);
+    toast('Data order belum bisa dimuat. Coba refresh lagi.');
   }
 }
 function renderAdminOrders(rows){
   const body=document.getElementById('adminOrdersBody');
   const mobileWrap=document.getElementById('adminOrdersMobile');
   if(!rows || rows.length===0){
-    body.innerHTML='<tr><td colspan="8" class="admin-empty">Belum ada data order.</td></tr>';
+    const emptyMessage=getAdminOrdersEmptyMessage();
+    body.innerHTML=`<tr><td colspan="8" class="admin-empty">${escapeHtml(emptyMessage)}</td></tr>`;
     if(mobileWrap){
-      mobileWrap.innerHTML='<div class="admin-mobile-empty">Belum ada data order.</div>';
+      mobileWrap.innerHTML=`<div class="admin-mobile-empty">${escapeHtml(emptyMessage)}</div>`;
     }
     return;
   }
@@ -746,6 +778,9 @@ function renderAdminOrders(rows){
   }
 }
 async function updateOrderStatus(noPesanan,status){
+  const key=`${noPesanan}|${status}`;
+  if(adminStatusPending.has(key))return;
+  adminStatusPending.add(key);
   try{
     const token=getAdminTokenRequired();
     const resp=await jsonpRequest({action:'update',id:noPesanan,status,token});
@@ -756,6 +791,8 @@ async function updateOrderStatus(noPesanan,status){
     const msg=normalizeApiMessage(err.message);
     if(handleSessionExpired(msg))return;
     toast(`Gagal update status: ${msg}`);
+  }finally{
+    adminStatusPending.delete(key);
   }
 }
 async function deleteOrder(noPesanan){

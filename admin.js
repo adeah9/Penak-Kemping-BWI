@@ -38,7 +38,17 @@ function setAdminLoginState(token){
 function updateAdminAuthButton(){
   const b=document.getElementById('adminAuthBtn');
   if(!b)return;
-  b.innerHTML=isAdminLoggedIn()?'<i class="fas fa-right-from-bracket"></i><span>Logout</span>':'<i class="fas fa-user-shield"></i><span>Login</span>';
+  if(isAdminLoggedIn()){
+    b.classList.remove('hdr-admin-gear');
+    b.innerHTML='<i class="fas fa-right-from-bracket"></i><span>Logout</span>';
+    b.setAttribute('aria-label','Logout Admin');
+    b.setAttribute('title','Logout Admin');
+  }else{
+    b.classList.add('hdr-admin-gear');
+    b.innerHTML='<i class="fas fa-gear"></i>';
+    b.setAttribute('aria-label','Akses Admin');
+    b.setAttribute('title','Akses Admin');
+  }
   updateInvoiceDbButton();
 }
 function updateInvoiceDbButton(){

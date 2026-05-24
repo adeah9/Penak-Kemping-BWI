@@ -56,6 +56,8 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.95);backd
 .hdr-actions{display:flex;align-items:center;gap:8px}
 .hdr-admin,.hdr-wa{display:flex;align-items:center;justify-content:center;gap:6px;min-height:34px;padding:7px 13px;background:var(--white);border:1px solid var(--line);border-radius:var(--r-sm);font-size:12px;font-weight:700;color:var(--ink-2);cursor:pointer;transition:var(--t);line-height:1;text-decoration:none}
 .hdr-admin:hover{background:var(--line-l)}
+.hdr-admin-gear{width:36px;min-width:36px;padding:0;gap:0}
+.hdr-admin-gear i{font-size:13px}
 .hdr-wa:hover{background:var(--line-l)}
 .hdr-wa i{color:#E1306C;font-size:14px}
 
@@ -508,6 +510,8 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.95);backd
   .logo-txt{gap:2px}
   .hdr-actions{gap:6px}
   .hdr-admin,.hdr-wa{min-height:32px;padding:6px 11px;font-size:11px}
+  .hdr-admin-gear{width:32px;min-width:32px;padding:0}
+  .hdr-admin-gear i{font-size:12px}
   .wrap{padding:0 14px 86px}
   .mob-bar{padding:9px 12px;gap:8px}
   .mob-total-amt{font-size:17px}

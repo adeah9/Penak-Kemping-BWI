@@ -818,10 +818,8 @@ function toggleItem(id){
   const idx=cart.findIndex(c=>c.id===id);
   if(idx>=0){
     cart.splice(idx,1);
-    toast(`${item.name} dibatalkan`);
   }else{
     cart.push({...item,qty:1});
-    toast(`${item.name} ditambahkan`);
   }
   bumpBadge();renderCart();updateGridHighlight();hitungTotal();
   saveOrderDraft();
@@ -830,9 +828,10 @@ function animateItemTap(id){
   const card=document.querySelector(`.item-card[data-id="${id}"]`);
   if(!card)return;
   card.classList.remove('tap-pop');
-  void card.offsetWidth;
-  card.classList.add('tap-pop');
-  setTimeout(()=>card.classList.remove('tap-pop'),180);
+  requestAnimationFrame(()=>{
+    card.classList.add('tap-pop');
+    setTimeout(()=>card.classList.remove('tap-pop'),150);
+  });
 }
 
 function changeQty(id,delta){

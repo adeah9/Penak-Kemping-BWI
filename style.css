@@ -151,6 +151,7 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.95);backd
 .item-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:9px}
 .item-card{background:var(--white);border:1px solid var(--line);border-radius:var(--r);padding:13px;cursor:pointer;transition:var(--t);display:flex;flex-direction:column;gap:5px;position:relative;overflow:hidden}
 .item-card.animate-in{animation:fadeUp 0.3s ease both}
+.item-card.tap-pop{animation:tapPop .18s var(--ease)}
 .item-card:hover{border-color:var(--red-pale);box-shadow:var(--sh-md);transform:translateY(-1px)}
 .item-card.in-cart{border-color:var(--red);background:var(--red-mist)}
 .item-card.unavailable{cursor:not-allowed;opacity:0.62;background:#fafafa;border-color:#e5e5e5}
@@ -267,16 +268,22 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.95);backd
 .rcpt-lbl{font-size:8.5px;color:rgba(255,255,255,0.4);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:2px}
 .rcpt-ttl{font-size:22px;font-weight:800;color:white}
 .rcpt-order-num{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;background:rgba(200,16,46,0.3);border:1px solid rgba(200,16,46,0.5);border-radius:99px;font-size:10px;font-weight:700;color:white;margin-top:5px}
+#rcptOrderCode{display:none!important}
 .rcpt-dt{font-size:10.5px;color:rgba(255,255,255,0.45);text-align:right}
 .rcpt-body{padding:22px 28px}
-.rcpt-info-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.rcpt-info-grid{display:grid;grid-template-columns:minmax(0,1.2fr) auto;gap:16px;margin-bottom:18px;align-items:start}
 .ris-label{font-size:8.5px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--ink-4);margin-bottom:6px}
 .ris-name{font-size:15px;font-weight:800;color:var(--ink);margin-bottom:3px}
 .ris-row{font-size:11px;color:var(--ink-3);margin-bottom:2px;display:flex;align-items:center;gap:5px}
 .ris-row i{color:var(--red);font-size:9px;width:10px}
 .rcpt-db-pill{margin-left:auto;display:none;align-items:center;padding:2px 7px;border-radius:99px;font-size:7.5px;font-weight:800;letter-spacing:0.06em;text-transform:uppercase;background:#eefaf0;color:#157a2d;border:1px solid #cfead4;line-height:1}
-.ris-period{text-align:right}
-.ris-dur-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:var(--ink);color:white;border-radius:99px;font-size:9.5px;font-weight:700;margin-top:5px}
+.ris-period{text-align:right;justify-self:end;display:flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:212px}
+.ris-period .ris-label{margin-bottom:4px}
+.ris-period .ris-row{margin-bottom:0;justify-content:flex-end;line-height:1.3}
+.ris-period .ris-row span{display:inline-flex;align-items:baseline;gap:3px}
+.ris-period .ris-row strong{font-weight:700;color:var(--ink-2)}
+.ris-dur-pill{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;background:rgba(17,17,17,0.92);color:rgba(255,255,255,0.92);border-radius:99px;font-size:8.8px;font-weight:700;margin-top:4px;border:1px solid rgba(255,255,255,0.12)}
+.ris-dur-pill i{font-size:7.2px;opacity:0.92}
 .rcpt-tbl{width:100%;border-collapse:collapse;margin-bottom:16px}
 .rcpt-tbl th{padding:5px 0;font-size:8px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-4);border-bottom:1px solid var(--line);text-align:left}
 .rcpt-tbl th:not(:first-child){text-align:center}
@@ -293,6 +300,7 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.95);backd
 .rt-row.total{margin-top:9px;padding-top:9px;border-top:1px solid var(--line)}
 .rt-row.total .rt-k{font-size:11px;font-weight:800;color:var(--ink);text-transform:uppercase;letter-spacing:0.06em}
 .rt-row.total .rt-v{font-size:20px;font-weight:800;color:var(--red)}
+.rt-k-mini{font-size:9px;font-weight:700;letter-spacing:0;text-transform:none;color:var(--ink-4);margin-left:4px}
 .rcpt-footer{padding:12px 28px;background:var(--line-l);border-top:1px solid var(--line);text-align:center}
 .rcpt-footer p{font-size:9.5px;color:var(--ink-4);font-style:italic}
 .modal-actions{padding:11px 28px 14px;background:var(--white);border-top:1px solid var(--line-l);display:flex;justify-content:flex-end;gap:7px;flex-wrap:wrap}
@@ -301,6 +309,7 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.95);backd
 .btn-close:hover{background:var(--line-l)}
 .btn-print-act{border:1px solid var(--ink);background:var(--ink);color:white}
 .btn-print-act:hover{background:#1e1e1e}
+#btnPrintAct{display:none}
 .btn-wa-act{border:1px solid #25D366;background:#25D366;color:white}
 .btn-wa-act:hover{background:#1db955}
 .btn-db-act{width:100%;padding:10px;border:1px solid var(--red-pale);background:var(--red-mist);color:var(--red);border-radius:var(--r);font-family:var(--fb);font-size:11.5px;font-weight:700;letter-spacing:0.03em;cursor:pointer;transition:var(--t);display:none;align-items:center;justify-content:center;gap:6px;margin-bottom:8px}
@@ -434,10 +443,11 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.95);backd
 
 /* ANIMATIONS */
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes tapPop{0%{transform:scale(1)}40%{transform:scale(.975)}100%{transform:scale(1)}}
 
 /* PRINT */
 @media print{
-  @page{size:A5 portrait;margin:4mm}
+  @page{size:A5 portrait;margin:7mm}
   html,body{margin:0!important;padding:0!important;background:#fff!important;overflow:visible!important;height:auto!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   body{display:block!important}
   body>:not(#modalRingkasan){display:none!important}
@@ -445,37 +455,37 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.95);backd
   #modalRingkasan{display:block!important;position:static!important;inset:auto!important;width:100%!important;min-height:0!important;height:auto!important;background:#fff!important;padding:0!important;margin:0!important;overflow:visible!important;backdrop-filter:none!important;-webkit-backdrop-filter:none!important}
   #modalRingkasan .modal{display:block!important;width:100%!important;max-width:none!important;margin:0!important;overflow:visible!important;box-shadow:none!important;border-radius:0!important;border:none!important;animation:none!important;page-break-inside:avoid!important;break-inside:avoid!important}
   #modalRingkasan .modal-actions{display:none!important}
-  #modalRingkasan .rcpt-hdr{padding:14px 15px 12px!important;background:#111!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  #modalRingkasan .rcpt-hdr{padding:18px 18px 14px!important;background:#111!important;color:#fff!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
   #modalRingkasan .rcpt-hdr::before{top:-22px!important;right:-20px!important;width:70px!important;height:70px!important;background:rgba(200,16,46,0.24)!important}
   #modalRingkasan .rcpt-hdr::after{display:none!important}
   #modalRingkasan .rcpt-brand{gap:8px!important;margin-bottom:10px!important}
-  #modalRingkasan .rcpt-logo-img{width:27px!important;height:27px!important;border-radius:6px!important}
-  #modalRingkasan .rcpt-bn{font-size:12.5px!important;line-height:1.15!important}
-  #modalRingkasan .rcpt-bs{font-size:7.8px!important}
-  #modalRingkasan .rcpt-lbl{font-size:7.1px!important;margin-bottom:1px!important}
-  #modalRingkasan .rcpt-ttl{font-size:16px!important;line-height:1.1!important}
-  #modalRingkasan .rcpt-order-num{font-size:8.4px!important;padding:2px 8px!important;margin-top:4px!important}
-  #modalRingkasan .rcpt-dt{font-size:8.6px!important}
-  #modalRingkasan .rcpt-body{padding:12px 15px 10px!important}
-  #modalRingkasan .rcpt-info-grid{grid-template-columns:1fr 1fr!important;gap:12px!important;margin-bottom:10px!important}
-  #modalRingkasan .ris-period{text-align:right!important}
-  #modalRingkasan .ris-label{font-size:7.4px!important;margin-bottom:4px!important}
-  #modalRingkasan .ris-name{font-size:12.8px!important;margin-bottom:2px!important}
-  #modalRingkasan .ris-row{font-size:9.4px!important;margin-bottom:1px!important;gap:4px!important;line-height:1.25!important}
+  #modalRingkasan .rcpt-logo-img{width:30px!important;height:30px!important;border-radius:6px!important}
+  #modalRingkasan .rcpt-bn{font-size:13.5px!important;line-height:1.2!important}
+  #modalRingkasan .rcpt-bs{font-size:8.3px!important}
+  #modalRingkasan .rcpt-lbl{font-size:7.8px!important;margin-bottom:2px!important}
+  #modalRingkasan .rcpt-ttl{font-size:18px!important;line-height:1.15!important}
+  #modalRingkasan .rcpt-order-num{font-size:9.2px!important;padding:2px 8px!important;margin-top:4px!important}
+  #modalRingkasan .rcpt-dt{font-size:9px!important}
+  #modalRingkasan .rcpt-body{padding:14px 18px 12px!important}
+  #modalRingkasan .rcpt-info-grid{grid-template-columns:minmax(0,1.18fr) auto!important;gap:10px!important;margin-bottom:10px!important}
+  #modalRingkasan .ris-period{text-align:right!important;min-width:190px!important;gap:2px!important}
+  #modalRingkasan .ris-label{font-size:8px!important;margin-bottom:4px!important}
+  #modalRingkasan .ris-name{font-size:13.4px!important;margin-bottom:2px!important}
+  #modalRingkasan .ris-row{font-size:10px!important;margin-bottom:1px!important;gap:4px!important;line-height:1.28!important}
   #modalRingkasan .ris-row i{font-size:7.5px!important;width:8px!important}
   #modalRingkasan .rcpt-db-pill{font-size:6.9px!important;padding:2px 6px!important}
-  #modalRingkasan .ris-dur-pill{padding:2px 7px!important;margin-top:4px!important;font-size:8px!important;background:#f2f2f2!important;color:#111!important;border:1px solid #dedede!important}
+  #modalRingkasan .ris-dur-pill{padding:2px 6px!important;margin-top:3px!important;font-size:7.5px!important;background:#f6f6f6!important;color:#222!important;border:1px solid #dedede!important}
   #modalRingkasan .rcpt-tbl{margin-bottom:9px!important}
-  #modalRingkasan .rcpt-tbl th{padding:3px 0!important;font-size:6.9px!important;letter-spacing:0.08em!important}
-  #modalRingkasan .rcpt-tbl td{padding:4px 0!important;font-size:9.4px!important;line-height:1.25!important}
+  #modalRingkasan .rcpt-tbl th{padding:4px 0!important;font-size:7.4px!important;letter-spacing:0.08em!important}
+  #modalRingkasan .rcpt-tbl td{padding:5px 0!important;font-size:10px!important;line-height:1.3!important}
   #modalRingkasan .rcpt-tbl tr{page-break-inside:avoid!important;break-inside:avoid!important}
   #modalRingkasan .rcpt-totals{padding-top:7px!important}
   #modalRingkasan .rt-row{margin-bottom:3px!important}
-  #modalRingkasan .rt-k{font-size:9.4px!important}
-  #modalRingkasan .rt-v{font-size:9.8px!important}
+  #modalRingkasan .rt-k{font-size:10px!important}
+  #modalRingkasan .rt-v{font-size:10.4px!important}
   #modalRingkasan .rt-row.total{margin-top:7px!important;padding-top:7px!important}
-  #modalRingkasan .rt-row.total .rt-k{font-size:9.6px!important}
-  #modalRingkasan .rt-row.total .rt-v{font-size:16px!important}
+  #modalRingkasan .rt-row.total .rt-k{font-size:10px!important}
+  #modalRingkasan .rt-row.total .rt-v{font-size:18px!important}
   #modalRingkasan .rcpt-footer{padding:7px 15px!important;background:#fafafa!important}
   #modalRingkasan .rcpt-footer p{font-size:8.1px!important;line-height:1.35!important;margin:0!important}
   #modalRingkasan .rcpt-footer p+p{margin-top:2px!important}
@@ -523,7 +533,8 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.95);backd
   .rcpt-body{padding:16px}
   .rcpt-hdr{padding:20px 16px 16px}
   .rcpt-info-grid{grid-template-columns:1fr;gap:12px}
-  .ris-period{text-align:left}
+  .ris-period{text-align:left;justify-self:stretch;align-items:flex-start;min-width:0;gap:4px}
+  .ris-period .ris-row{justify-content:flex-start}
   .rcpt-footer{padding:10px 16px}
   .admin-form-grid{grid-template-columns:1fr}
   .admin-filter-row{grid-template-columns:1fr}

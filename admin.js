@@ -43,6 +43,10 @@ function updateAdminAuthButton(){
 }
 function updateInvoiceDbButton(){
   const loggedIn=isAdminLoggedIn();
+  const printBtn=document.getElementById('btnPrintAct');
+  if(printBtn){
+    printBtn.style.display=loggedIn?'inline-flex':'none';
+  }
   ['btnDbEntryD','btnDbEntryMobBar','btnDbEntryM'].forEach(id=>{
     const btn=document.getElementById(id);
     if(!btn)return;
@@ -143,14 +147,6 @@ window.loginAdminIn = loginAdminIn;
 window.loginAdmin = loginAdmin;
 window.loginAdminin_ = loginAdminIn_;
 window.loginAdminin = loginAdminIn;
-function randomSuffix(len=4){return String(Math.floor(Math.random()*Math.pow(10,len))).padStart(len,'0')}
-function generateAdminOrderNum(){
-  const now=new Date();
-  const yy=String(now.getFullYear()).slice(-2);
-  const mm=String(now.getMonth()+1).padStart(2,'0');
-  const dd=String(now.getDate()).padStart(2,'0');
-  return `ADM-${yy}${mm}${dd}-${randomSuffix()}`;
-}
 function resetAdminForm(){
   const today=toISODate(new Date());
   document.getElementById('admNama').value='';
@@ -178,7 +174,7 @@ function hitungAdminKembali(){
 function setAdminMeta(text){document.getElementById('adminMeta').innerText=text}
 function normalizeOrderRow(row){
   return {
-    noPesanan: row.noPesanan||row['Kode Pesanan']||row['ID Internal']||row['No Pesanan']||'',
+    noPesanan: row.noPesanan||row['Kode Pesanan']||row['No Pesanan']||'',
     nama: row.nama||row['Nama']||'',
     whatsapp: row.whatsapp||row['WhatsApp']||'',
     jaminan: row.jaminan||row['Jaminan']||'',
@@ -352,19 +348,8 @@ function applyAdminOrderFilters(rows){
 function renderAdminPeriodMeta(filtered,total){
   const el=document.getElementById('adminPeriodMeta');
   if(!el)return;
-  const omzet=(filtered||[]).reduce((sum,r)=>sum+(Number(r.total)||0),0);
-  if(!hasAnyAdminFilter(adminFilterState)){
-    el.innerText=`Menampilkan semua data order. Order: ${total||0}, Omzet: ${fmt(omzet)}.`;
-    return;
-  }
-  if(adminFilterState.mode==='month'){
-    const monthLabel=/^\d{4}-\d{2}$/.test(adminFilterState.month)
-      ? new Date(Number(adminFilterState.month.slice(0,4)),Number(adminFilterState.month.slice(5,7))-1,1).toLocaleDateString('id-ID',{month:'long',year:'numeric'})
-      : adminFilterState.month;
-    el.innerText=`Filter per bulan ${monthLabel}. Ditampilkan ${filtered.length} order, omzet ${fmt(omzet)}.`;
-    return;
-  }
-  el.innerText=`Filter per tanggal ${formatDbDate(adminFilterState.date)}. Ditampilkan ${filtered.length} order, omzet ${fmt(omzet)}.`;
+  el.innerText='';
+  el.style.display='none';
 }
 function refreshAdminOrderView(){
   const filtered=applyAdminOrderFilters(adminOrdersAll);
@@ -387,37 +372,20 @@ function lihatSemuaOrder(){
 function updateAdminRecap(filteredRows){
   const orderLabel=document.getElementById('recapOrderLabel');
   const omzetLabel=document.getElementById('recapOmzetLabel');
-  let sourceRows=adminOrdersAll||[];
-  let totalOrder=0;
-  let totalOmzet=0;
+  const sourceRows=Array.isArray(filteredRows)?filteredRows:[];
+  const totalOrder=sourceRows.length;
+  const totalOmzet=sourceRows.reduce((sum,r)=>sum+(Number(r.total)||0),0);
+  const mode=(adminFilterState && adminFilterState.mode) ? adminFilterState.mode : 'all';
 
-  if(hasAnyAdminFilter(adminFilterState)){
-    sourceRows=filteredRows||[];
-    totalOrder=sourceRows.length;
-    totalOmzet=sourceRows.reduce((sum,r)=>sum+(Number(r.total)||0),0);
-    if(adminFilterState.mode==='month'){
-      const labelMonth=/^\d{4}-\d{2}$/.test(adminFilterState.month)
-        ? new Date(Number(adminFilterState.month.slice(0,4)),Number(adminFilterState.month.slice(5,7))-1,1).toLocaleDateString('id-ID',{month:'long',year:'numeric'})
-        : adminFilterState.month;
-      if(orderLabel)orderLabel.innerText=`Order ${labelMonth}`;
-      if(omzetLabel)omzetLabel.innerText=`Omzet ${labelMonth}`;
-    }else{
-      const labelDate=formatDbDate(adminFilterState.date);
-      if(orderLabel)orderLabel.innerText=`Order ${labelDate}`;
-      if(omzetLabel)omzetLabel.innerText=`Omzet ${labelDate}`;
-    }
+  if(mode==='month'){
+    if(orderLabel)orderLabel.innerText='Order Bulan Ini';
+    if(omzetLabel)omzetLabel.innerText='Omzet Bulan Ini';
+  }else if(mode==='date'){
+    if(orderLabel)orderLabel.innerText='Order Tanggal Ini';
+    if(omzetLabel)omzetLabel.innerText='Omzet Tanggal Ini';
   }else{
-    const todayIso=toISODate(new Date());
-    const rowToday=(adminOrdersAll||[]).filter(r=>{
-      const wMs=parseWaktuOrderMs(r.waktuOrder||'');
-      if(wMs>0)return toISODate(new Date(wMs))===todayIso;
-      return normalizeOrderDateKey(r.tanggalAmbil||'')===todayIso;
-    });
-    sourceRows=adminOrdersAll||[];
-    totalOrder=rowToday.length;
-    totalOmzet=rowToday.reduce((sum,r)=>sum+(Number(r.total)||0),0);
-    if(orderLabel)orderLabel.innerText='Order Hari Ini';
-    if(omzetLabel)omzetLabel.innerText='Omzet Hari Ini';
+    if(orderLabel)orderLabel.innerText='Total Order';
+    if(omzetLabel)omzetLabel.innerText='Total Omzet';
   }
 
   const activeCount = sourceRows.filter(r=>{
@@ -597,7 +565,7 @@ function jsonpRequest(params, endpointUrl){
     if(!isGasConfigured()){reject(new Error('URL Google Apps Script belum diisi'));return}
     const targetUrl=(endpointUrl || getActiveGasUrl()).trim();
     if(!targetUrl){reject(new Error('URL Google Apps Script belum diisi'));return}
-    const cb='cb_'+Date.now()+'_'+Math.floor(Math.random()*9999);
+    const cb='cb_'+Date.now()+'_'+(window.__pkbCbSeq=(window.__pkbCbSeq||0)+1);
     const script=document.createElement('script');
     const url=new URL(targetUrl);
     Object.keys(params||{}).forEach(k=>url.searchParams.set(k,params[k]));

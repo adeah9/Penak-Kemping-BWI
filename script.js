@@ -277,7 +277,7 @@ const animatedItemIds = new Set();
 const CATALOG_INITIAL_ROWS = 5;
 
 const GAS_WEB_APP_URL_KEY = 'PKB_GAS_WEB_APP_URL';
-const GAS_WEB_APP_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbx824RKApDjyfBf4jeI6CPJOupLo2KKYKPh9BYaLDYubVHdLMGYLFCnAEFJJphjfw3w/exec';
+const GAS_WEB_APP_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbwzi85AaJ_q7woTpgdCoha5CpQlz-hal6aRIvQyhCJ5uCZ_guDvTxGxWhkEkCGuBcjW/exec';
 function normalizeGasEndpointUrl(url){
   const raw=String(url||'').trim();
   if(!raw)return'';
@@ -432,7 +432,7 @@ function setSubmitLoading(isLoading){
   const desktopBtn=document.getElementById('btnOrderD');
   if(desktopBtn){
     desktopBtn.disabled=!!isLoading;
-    desktopBtn.innerHTML=isLoading?'<i class="fas fa-spinner fa-spin"></i> Memproses...':'<i class="fas fa-shopping-bag"></i> Lihat Keranjang';
+    desktopBtn.innerHTML=isLoading?'<i class="fas fa-spinner fa-spin"></i> Memproses...':'<i class="fas fa-shopping-bag"></i> Buat Pesanan';
   }
   const mobileBtn=document.getElementById('btnOrderM');
   if(mobileBtn){
@@ -486,12 +486,8 @@ function buildCurrentOrderPayload(){
 
 
 function generateOrderNum(){
-  const now=new Date();
-  const yy=String(now.getFullYear()).slice(-2);
-  const mm=String(now.getMonth()+1).padStart(2,'0');
-  const dd=String(now.getDate()).padStart(2,'0');
-  const rand=String(Math.floor(1000+Math.random()*9000));
-  currentOrderNum='PKB-'+yy+mm+dd+'-'+rand;
+  // Kode pesanan final ditetapkan oleh backend (GAS) dengan format PKB-001 dst.
+  currentOrderNum='';
   document.getElementById('orderNumD').innerText=currentOrderNum;
   document.getElementById('orderNumM').innerText=currentOrderNum;
   return currentOrderNum;
@@ -820,15 +816,28 @@ function renderGrid(items){
 function toggleItem(id){
   const item=[...ITEMS_SATUAN,...ITEMS_PAKET,...ITEMS_PIKNIK].find(i=>i.id===id);
   if(!item)return;
+  animateItemTap(id);
   const stockStatus=getStockStatusById(id);
   if(stockStatus==='habis'){toast(`${item.name} sedang habis`);return}
   if(stockStatus==='maintenance'){toast(`${item.name} sedang maintenance`);return}
   const idx=cart.findIndex(c=>c.id===id);
-  if(idx>=0) cart[idx].qty++;
-  else cart.push({...item,qty:1});
+  if(idx>=0){
+    cart.splice(idx,1);
+    toast(`${item.name} dibatalkan`);
+  }else{
+    cart.push({...item,qty:1});
+    toast(`${item.name} ditambahkan`);
+  }
   bumpBadge();renderCart();updateGridHighlight();hitungTotal();
   saveOrderDraft();
-  toast(`${item.name} ditambahkan`);
+}
+function animateItemTap(id){
+  const card=document.querySelector(`.item-card[data-id="${id}"]`);
+  if(!card)return;
+  card.classList.remove('tap-pop');
+  void card.offsetWidth;
+  card.classList.add('tap-pop');
+  setTimeout(()=>card.classList.remove('tap-pop'),180);
 }
 
 function changeQty(id,delta){
@@ -901,7 +910,8 @@ function hitungTotal(){
   document.getElementById('cartBadgeD').innerText=cnt;
   document.getElementById('cartBadgeMob').innerText=cnt;
   document.getElementById('subtotalD').innerText=fmt(subtotal);
-  document.getElementById('totalPerHariD').innerText=fmt(total);
+  const totalPerHariD=document.getElementById('totalPerHariD');
+  if(totalPerHariD)totalPerHariD.innerText=fmt(total);
   document.getElementById('grandTotalD').innerText=fmt(total);
   document.getElementById('grandTotalMob').innerText=fmt(total);
   document.getElementById('grandTotalMSheet').innerText=fmt(total);
@@ -1055,7 +1065,6 @@ async function tampilRingkasan(){
     });
     const perHari=cart.reduce((s,i)=>s+i.price*i.qty,0);
     document.getElementById('rcptSubtotal').innerText=fmt(perHari);
-    document.getElementById('rcptHariTotal').innerText=fmt(subtotal);
     document.getElementById('rcptGrandTotal').innerText=fmt(subtotal);
     document.getElementById('modalRingkasan').classList.add('show');
     document.body.style.overflow='hidden';
@@ -1111,4 +1120,3 @@ window.addEventListener('resize',()=>{
     applyFilter((document.getElementById('searchInput').value||'').toLowerCase());
   }
 });
-

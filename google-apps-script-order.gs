@@ -3,7 +3,7 @@ const SPREADSHEET_ID_FALLBACK = '1JYywk5ud8KnQDriZaqeyla6Q_K1F4CM2cbdMfRyQHE';
 const SHEET_ORDERS = 'Orders';
 const SHEET_STOCK = 'Stock';
 const ORDER_HEADERS = [
-  'ID Internal',
+  'Kode Pesanan',
   'Nama',
   'WhatsApp',
   'Jaminan',
@@ -118,6 +118,7 @@ function getOrdersSheet_() {
   let sh = ss.getSheetByName(SHEET_ORDERS);
   if (!sh) sh = ss.insertSheet(SHEET_ORDERS);
   ensureHeaders_(sh, ORDER_HEADERS);
+  migrateLegacyOrderHeader_(sh);
   return sh;
 }
 
@@ -140,11 +141,30 @@ function ensureHeaders_(sheet, headers) {
     sheet.insertColumnsAfter(sheet.getMaxColumns(), headers.length - sheet.getMaxColumns());
   }
   const current = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
+  const currentHeaderA = String(current[0] || '').trim();
+  // Backward compatibility: migrate legacy header label automatically.
+  if (isLegacyKodePesananHeader_(currentHeaderA)) {
+    sheet.getRange(1, 1).setValue('Kode Pesanan');
+    current[0] = 'Kode Pesanan';
+  }
   const mismatch = headers.some(function (h, i) {
     return String(current[i] || '') !== h;
   });
   if (mismatch) {
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+  }
+  migrateLegacyOrderHeader_(sheet);
+}
+
+function isLegacyKodePesananHeader_(value) {
+  const compact = String(value || '').trim().toLowerCase().replace(/\s+/g, '');
+  return compact === 'idinternal' || compact === 'internalid' || compact === 'orderid';
+}
+
+function migrateLegacyOrderHeader_(sheet) {
+  const headerA = String(sheet.getRange(1, 1).getValue() || '').trim();
+  if (isLegacyKodePesananHeader_(headerA)) {
+    sheet.getRange(1, 1).setValue('Kode Pesanan');
   }
 }
 
@@ -390,17 +410,20 @@ function sanitizeTanggalColumns_(sh) {
 }
 
 function isSimpleOrderCode_(value) {
-  return /^ID-\d{3,}$/i.test(String(value || '').trim());
+  return /^PKB-\d{3,}$/i.test(String(value || '').trim());
 }
 
-function normalizeInternalOrderId_(value) {
+function normalizeKodePesanan_(value) {
   var raw = String(value || '').trim().toUpperCase();
   if (!raw) return '';
+  if (/^ID-\d{3,}$/i.test(raw)) {
+    raw = raw.replace(/^ID-/i, 'PKB-');
+  }
   if (isSimpleOrderCode_(raw)) return raw;
   return '';
 }
 
-function generateInternalOrderId_(sheet) {
+function generateKodePesanan_(sheet) {
   var sh = sheet || getOrdersSheet_();
   var lastRow = sh.getLastRow();
   var maxNum = 0;
@@ -408,17 +431,18 @@ function generateInternalOrderId_(sheet) {
     var values = sh.getRange(2, 1, lastRow - 1, 1).getValues();
     values.forEach(function (r) {
       var code = String(r[0] || '').trim().toUpperCase();
-      var match = code.match(/^ID-(\d+)$/);
+      if (/^ID-\d+$/i.test(code)) code = code.replace(/^ID-/i, 'PKB-');
+      var match = code.match(/^PKB-(\d+)$/);
       if (!match) return;
       var num = Number(match[1]);
       if (num > maxNum) maxNum = num;
     });
   }
   var next = maxNum + 1;
-  return 'ID-' + String(next).padStart(3, '0');
+  return 'PKB-' + String(next).padStart(3, '0');
 }
 
-function sanitizeInternalIdColumn_(sh) {
+function sanitizeKodePesananColumn_(sh) {
   var lastRow = sh.getLastRow();
   if (lastRow < 2) return;
   var range = sh.getRange(2, 1, lastRow - 1, 1);
@@ -428,7 +452,8 @@ function sanitizeInternalIdColumn_(sh) {
   var maxNum = 0;
   values.forEach(function (r) {
     var current = String(r[0] || '').trim().toUpperCase();
-    var match = current.match(/^ID-(\d+)$/);
+    if (/^ID-\d+$/i.test(current)) current = current.replace(/^ID-/i, 'PKB-');
+    var match = current.match(/^PKB-(\d+)$/);
     if (!match) return;
     var num = Number(match[1]);
     if (!num) return;
@@ -438,10 +463,10 @@ function sanitizeInternalIdColumn_(sh) {
   var nextNum = maxNum + 1;
   var next = values.map(function (r) {
     var current = String(r[0] || '').trim().toUpperCase();
-    var normalized = normalizeInternalOrderId_(current);
+    var normalized = normalizeKodePesanan_(current);
     if (!normalized) {
       while (used[nextNum]) nextNum++;
-      normalized = 'ID-' + String(nextNum).padStart(3, '0');
+      normalized = 'PKB-' + String(nextNum).padStart(3, '0');
       used[nextNum] = true;
       nextNum++;
     }
@@ -449,6 +474,51 @@ function sanitizeInternalIdColumn_(sh) {
     return [normalized];
   });
   if (changed) range.setValues(next);
+}
+
+function parseWaktuOrderForSortMs_(value) {
+  if (value === null || value === undefined || value === '') return 0;
+  if (Object.prototype.toString.call(value) === '[object Date]' && !isNaN(value.getTime())) {
+    return value.getTime();
+  }
+  var raw = String(value).trim();
+  if (!raw) return 0;
+  var idLike = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:,\s*|\s+)?(\d{1,2})?[.:]?(\d{1,2})?[.:]?(\d{1,2})?$/);
+  if (idLike) {
+    var day = Number(idLike[1]);
+    var month = Number(idLike[2]);
+    var year = Number(idLike[3]);
+    var hour = Number(idLike[4] || 0);
+    var min = Number(idLike[5] || 0);
+    var sec = Number(idLike[6] || 0);
+    var d = new Date(year, month - 1, day, hour, min, sec);
+    return isNaN(d.getTime()) ? 0 : d.getTime();
+  }
+  if (/^\d{4}-\d{2}-\d{2}T/.test(raw) || /^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    var p = new Date(raw);
+    return isNaN(p.getTime()) ? 0 : p.getTime();
+  }
+  var parsed = new Date(raw);
+  return isNaN(parsed.getTime()) ? 0 : parsed.getTime();
+}
+
+function sortOrdersSheet_(sh) {
+  var sheet = sh || getOrdersSheet_();
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 3) return;
+  var rowCount = lastRow - 1;
+  var values = sheet.getRange(2, 1, rowCount, ORDER_HEADERS.length).getValues();
+  values.sort(function (a, b) {
+    var aAmbil = normalizeCellDateToIso_(a[4]);
+    var bAmbil = normalizeCellDateToIso_(b[4]);
+    var ambilCmp = String(bAmbil || '').localeCompare(String(aAmbil || ''));
+    if (ambilCmp !== 0) return ambilCmp;
+    var aWaktu = parseWaktuOrderForSortMs_(a[9]);
+    var bWaktu = parseWaktuOrderForSortMs_(b[9]);
+    if (aWaktu !== bWaktu) return bWaktu - aWaktu;
+    return String(b[0] || '').localeCompare(String(a[0] || ''));
+  });
+  sheet.getRange(2, 1, rowCount, ORDER_HEADERS.length).setValues(values);
 }
 
 function validateOrder_(o) {
@@ -476,27 +546,29 @@ function orderToRow_(o) {
 function createOrUpsertOrder_(order) {
   validateOrder_(order);
   const sh = getOrdersSheet_();
-  sanitizeInternalIdColumn_(sh);
+  sanitizeKodePesananColumn_(sh);
   sanitizeTanggalColumns_(sh);
-  const providedId = normalizeInternalOrderId_(order.noPesanan || order.id || '');
+  const providedId = normalizeKodePesanan_(order.noPesanan || order.id || '');
   const targetRow = providedId ? findRowByNoPesanan_(sh, providedId) : -1;
-  const internalId = targetRow > 0
-    ? String(sh.getRange(targetRow, 1).getValue() || providedId || generateInternalOrderId_(sh))
-    : (providedId || generateInternalOrderId_(sh));
-  order.noPesanan = internalId;
+  const orderCode = targetRow > 0
+    ? String(sh.getRange(targetRow, 1).getValue() || providedId || generateKodePesanan_(sh))
+    : (providedId || generateKodePesanan_(sh));
+  order.noPesanan = orderCode;
   const row = orderToRow_(order);
   if (targetRow > 0) {
     sh.getRange(targetRow, 1, 1, ORDER_HEADERS.length).setValues([row]);
+    sortOrdersSheet_(sh);
     return { success: true, duplicate: true, mode: 'updated', message: 'Order sudah ada, data diperbarui.', row: targetRow };
   }
   const appendAt = Math.max(sh.getLastRow() + 1, 2);
   sh.getRange(appendAt, 1, 1, ORDER_HEADERS.length).setValues([row]);
+  sortOrdersSheet_(sh);
   return { success: true, duplicate: false, mode: 'created', message: 'Order ditambahkan.', row: appendAt };
 }
 
 function listOrders_() {
   const sh = getOrdersSheet_();
-  sanitizeInternalIdColumn_(sh);
+  sanitizeKodePesananColumn_(sh);
   sanitizeTanggalColumns_(sh);
   sanitizeWaktuOrderColumn_(sh);
   const lastRow = sh.getLastRow();
@@ -533,6 +605,7 @@ function updateOrderStatus_(noPesanan, status) {
   const row = findRowByNoPesanan_(sh, noPesanan);
   if (row < 1) throw new Error('Order tidak ditemukan.');
   sh.getRange(row, 11).setValue(normalizeOrderStatus_(status));
+  sortOrdersSheet_(sh);
   return { success: true, message: 'Status berhasil diupdate.', row: row };
 }
 
@@ -542,6 +615,7 @@ function deleteOrder_(noPesanan) {
   const row = findRowByNoPesanan_(sh, noPesanan);
   if (row < 1) throw new Error('Order tidak ditemukan.');
   sh.deleteRow(row);
+  sortOrdersSheet_(sh);
   return { success: true, message: 'Order berhasil dihapus.' };
 }
 

@@ -583,7 +583,7 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.95);backd
     <div class="admin-form-wrap" id="adminFormWrap">
       <div class="admin-form-grid">
         <div class="cf-field">
-          <div class="cf-label">No Pesanan</div>
+          <div class="cf-label">Kode Pesanan</div>
           <input type="text" class="cf-input" id="admNoPesanan">
         </div>
         <div class="cf-field">
@@ -645,7 +645,7 @@ header{position:sticky;top:0;z-index:100;background:rgba(255,255,255,0.95);backd
       <table class="admin-table">
         <thead>
           <tr>
-            <th>No Pesanan</th>
+            <th>Kode Pesanan</th>
             <th>Nama</th>
             <th>WhatsApp</th>
             <th>Jaminan</th>
@@ -1146,17 +1146,10 @@ function submitAdminLogin(){
   }
   toast('Username / password admin salah');
 }
-function randomSuffix(len=4){return String(Math.floor(Math.random()*Math.pow(10,len))).padStart(len,'0')}
-function generateAdminOrderNum(){
-  const now=new Date();
-  const yy=String(now.getFullYear()).slice(-2);
-  const mm=String(now.getMonth()+1).padStart(2,'0');
-  const dd=String(now.getDate()).padStart(2,'0');
-  return `ADM-${yy}${mm}${dd}-${randomSuffix()}`;
-}
+function generateAdminKodePesanan(){return ''}
 function resetAdminForm(){
   const today=toISODate(new Date());
-  document.getElementById('admNoPesanan').value=generateAdminOrderNum();
+  document.getElementById('admNoPesanan').value=generateAdminKodePesanan();
   document.getElementById('admNama').value='';
   document.getElementById('admWA').value='';
   document.getElementById('admJaminan').value='';
@@ -1181,7 +1174,7 @@ function hitungAdminKembali(){
 function setAdminMeta(text){document.getElementById('adminMeta').innerText=text}
 function normalizeOrderRow(row){
   return {
-    noPesanan: row.noPesanan||row['No Pesanan']||'',
+    noPesanan: row.noPesanan||row['Kode Pesanan']||row['No Pesanan']||'',
     nama: row.nama||row['Nama']||'',
     whatsapp: row.whatsapp||row['WhatsApp']||'',
     jaminan: row.jaminan||row['Jaminan']||'',
@@ -1197,7 +1190,7 @@ function normalizeOrderRow(row){
 function jsonpRequest(params){
   return new Promise((resolve,reject)=>{
     if(!isGasConfigured()){reject(new Error('URL Google Apps Script belum diisi'));return}
-    const cb='cb_'+Date.now()+'_'+Math.floor(Math.random()*9999);
+    const cb='cb_'+Date.now()+'_'+(window.__pkbCbSeq=(window.__pkbCbSeq||0)+1);
     const script=document.createElement('script');
     const url=new URL(GAS_WEB_APP_URL);
     Object.keys(params||{}).forEach(k=>url.searchParams.set(k,params[k]));
@@ -1287,7 +1280,7 @@ async function deleteOrder(noPesanan){
 async function addManualOrder(){
   const noPesanan=(document.getElementById('admNoPesanan').value||'').trim();
   const nama=(document.getElementById('admNama').value||'').trim();
-  if(!noPesanan||!nama){toast('No Pesanan dan Nama wajib diisi');return}
+  if(!noPesanan||!nama){toast('Kode Pesanan dan Nama wajib diisi');return}
   const payload={
     noPesanan,
     nama,
@@ -1315,12 +1308,7 @@ async function pushCurrentOrderToSheet(orderData){
 }
 
 function generateOrderNum(){
-  const now=new Date();
-  const yy=String(now.getFullYear()).slice(-2);
-  const mm=String(now.getMonth()+1).padStart(2,'0');
-  const dd=String(now.getDate()).padStart(2,'0');
-  const rand=String(Math.floor(1000+Math.random()*9000));
-  currentOrderNum='PKB-'+yy+mm+dd+'-'+rand;
+  currentOrderNum='';
   document.getElementById('orderNumD').innerText=currentOrderNum;
   document.getElementById('orderNumM').innerText=currentOrderNum;
   return currentOrderNum;

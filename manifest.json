@@ -1,6 +1,6 @@
 {
-  "name": "Penak Kemping Admin",
-  "short_name": "PKB Admin",
+  "name": "PenakKemping",
+  "short_name": "PenakKemping",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

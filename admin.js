@@ -1,12 +1,13 @@
 // Admin logic (Google Sheet + auth)
 let adminStockLoaded = false;
 let adminOrdersAll = [];
-let adminFilterState = {mode:'all',date:'',month:'',sort:'date_desc'};
-let adminFilterDraft = {mode:'all',date:'',month:'',sort:'date_desc'};
+let adminFilterState = {mode:'all',date:'',month:'',keyword:''};
+let adminFilterDraft = {mode:'all',date:'',month:'',keyword:''};
 let adminStockSnapshot = {};
 let pendingStockChanges = {};
 let stockSearchKeyword = '';
 let adminStatusPending = new Set();
+let adminSearchDebounceTimer = null;
 const DEBUG_LOGIN_FLOW = (location.hostname==='127.0.0.1' || location.hostname==='localhost' || location.hostname==='::1');
 
 function debugLoginLog(step, data){
@@ -179,9 +180,18 @@ function hitungAdminKembali(){
   document.getElementById('admTglKembali').value=getTanggalKembaliISO(tgl,dur);
 }
 function setAdminMeta(text){document.getElementById('adminMeta').innerText=text}
+function normalizePublicOrderCode(code){
+  const raw=String(code||'').trim().toUpperCase();
+  return /^PKB-[0-9A-Z]{3}$/.test(raw)?raw:'';
+}
 function normalizeOrderRow(row){
+  const kode=normalizePublicOrderCode(
+    row.kodePesanan||row.noPesanan||row['Kode Pesanan']||row['No Pesanan']||''
+  );
   return {
-    noPesanan: row.noPesanan||row['Kode Pesanan']||row['No Pesanan']||'',
+    idInternal: row.idInternal||row['ID Internal']||'',
+    kodePesanan: kode,
+    noPesanan: kode,
     nama: row.nama||row['Nama']||'',
     whatsapp: row.whatsapp||row['WhatsApp']||'',
     jaminan: row.jaminan||row['Jaminan']||'',
@@ -272,11 +282,10 @@ function getOrderSortKey(order){
 function compareOrderRows(a,b){
   const aKey=getOrderSortKey(a);
   const bKey=getOrderSortKey(b);
-  const dir=adminFilterState.sort==='date_asc' ? 1 : -1;
-  if(aKey.ambilMs!==bKey.ambilMs)return dir*(aKey.ambilMs-bKey.ambilMs);
-  if(aKey.kembaliMs!==bKey.kembaliMs)return dir*(aKey.kembaliMs-bKey.kembaliMs);
-  if(aKey.waktuMs!==bKey.waktuMs)return dir*(aKey.waktuMs-bKey.waktuMs);
-  return dir*String(a.noPesanan||'').localeCompare(String(b.noPesanan||''));
+  if(aKey.ambilMs!==bKey.ambilMs)return bKey.ambilMs-aKey.ambilMs;
+  if(aKey.kembaliMs!==bKey.kembaliMs)return bKey.kembaliMs-aKey.kembaliMs;
+  if(aKey.waktuMs!==bKey.waktuMs)return bKey.waktuMs-aKey.waktuMs;
+  return String(b.noPesanan||'').localeCompare(String(a.noPesanan||''));
 }
 function hasOrderFilter(stateObj){
   const s=stateObj||adminFilterState;
@@ -301,21 +310,34 @@ function setAdminFilterMode(mode){
     adminFilterDraft.month='';
   }
   syncAdminFilterInputs();
+  applyAdminFilters();
 }
 function setAdminFilterDateInput(v){
   adminFilterDraft.date=(v||'').trim();
+  applyAdminFilters();
 }
 function setAdminFilterMonthInput(v){
   adminFilterDraft.month=(v||'').trim();
+  applyAdminFilters();
 }
-function setAdminSortMode(v){
-  adminFilterDraft.sort=(v==='date_asc')?'date_asc':'date_desc';
+function setAdminSearchKeyword(v){
+  adminFilterDraft.keyword=String(v||'').trim();
+}
+function onAdminSearchInput(v){
+  setAdminSearchKeyword(v);
+  if(adminSearchDebounceTimer){
+    clearTimeout(adminSearchDebounceTimer);
+  }
+  adminSearchDebounceTimer=setTimeout(()=>{
+    adminFilterState.keyword=adminFilterDraft.keyword;
+    refreshAdminOrderView();
+  },200);
 }
 function syncAdminFilterInputs(){
   const modeEl=document.getElementById('adminFilterMode');
   const fDate=document.getElementById('adminFilterDate');
   const fMonth=document.getElementById('adminFilterMonth');
-  const sortEl=document.getElementById('adminSortMode');
+  const searchEl=document.getElementById('adminOrderSearch');
   const timeLbl=document.getElementById('adminFilterTimeLabel');
   if(modeEl)modeEl.value=adminFilterDraft.mode;
   if(fDate){
@@ -328,7 +350,7 @@ function syncAdminFilterInputs(){
     fMonth.disabled=adminFilterDraft.mode!=='month';
     fMonth.style.display=adminFilterDraft.mode==='month'?'block':'none';
   }
-  if(sortEl)sortEl.value=adminFilterDraft.sort;
+  if(searchEl)searchEl.value=adminFilterDraft.keyword||'';
   if(timeLbl){
     if(adminFilterDraft.mode==='month')timeLbl.innerText='Filter Bulan';
     else if(adminFilterDraft.mode==='all')timeLbl.innerText='';
@@ -341,6 +363,14 @@ function applyAdminFilters(){
 }
 function applyAdminOrderFilters(rows){
   let list = Array.isArray(rows) ? [...rows] : [];
+  const keyword=String(adminFilterState.keyword||'').trim().toLowerCase();
+  if(keyword){
+    list=list.filter(r=>{
+      return String(r.kodePesanan||r.noPesanan||'').toLowerCase().includes(keyword)
+        || String(r.nama||'').toLowerCase().includes(keyword)
+        || String(r.whatsapp||'').toLowerCase().includes(keyword);
+    });
+  }
   if(hasOrderFilter(adminFilterState)){
     if(adminFilterState.mode==='month'){
       list=list.filter(r=>normalizeOrderDateKey(r.tanggalAmbil||'').startsWith(`${adminFilterState.month}-`));
@@ -357,8 +387,12 @@ function refreshAdminOrderView(){
   updateAdminRecap(filtered);
 }
 function resetAdminFilters(){
-  adminFilterState={mode:'all',date:'',month:'',sort:'date_desc'};
-  adminFilterDraft={mode:'all',date:'',month:'',sort:'date_desc'};
+  adminFilterState={mode:'all',date:'',month:'',keyword:''};
+  adminFilterDraft={mode:'all',date:'',month:'',keyword:''};
+  if(adminSearchDebounceTimer){
+    clearTimeout(adminSearchDebounceTimer);
+    adminSearchDebounceTimer=null;
+  }
   syncAdminFilterInputs();
   refreshAdminOrderView();
 }
@@ -366,6 +400,7 @@ function lihatSemuaOrder(){
   adminFilterDraft.mode='all';
   adminFilterDraft.date='';
   adminFilterDraft.month='';
+  adminFilterDraft.keyword='';
   applyAdminFilters();
 }
 function updateAdminRecap(filteredRows){
@@ -413,7 +448,7 @@ function renderAdminOrdersLoading(){
   const body=document.getElementById('adminOrdersBody');
   const mobileWrap=document.getElementById('adminOrdersMobile');
   if(body){
-    body.innerHTML='<tr><td colspan="8" class="admin-empty">Memuat data order...</td></tr>';
+    body.innerHTML='<tr><td colspan="9" class="admin-empty">Memuat data order...</td></tr>';
   }
   if(mobileWrap){
     mobileWrap.innerHTML=`
@@ -426,6 +461,9 @@ function renderAdminOrdersLoading(){
   }
 }
 function getAdminOrdersEmptyMessage(){
+  if(String(adminFilterState.keyword||'').trim()){
+    return 'Order tidak ditemukan.';
+  }
   const mode=(adminFilterState && adminFilterState.mode) ? adminFilterState.mode : 'all';
   if(mode==='month')return 'Belum ada order pada bulan yang dipilih.';
   if(mode==='date')return 'Belum ada order pada tanggal yang dipilih.';
@@ -724,7 +762,7 @@ function renderAdminOrders(rows){
   const mobileWrap=document.getElementById('adminOrdersMobile');
   if(!rows || rows.length===0){
     const emptyMessage=getAdminOrdersEmptyMessage();
-    body.innerHTML=`<tr><td colspan="8" class="admin-empty">${escapeHtml(emptyMessage)}</td></tr>`;
+    body.innerHTML=`<tr><td colspan="9" class="admin-empty">${escapeHtml(emptyMessage)}</td></tr>`;
     if(mobileWrap){
       mobileWrap.innerHTML=`<div class="admin-mobile-empty">${escapeHtml(emptyMessage)}</div>`;
     }
@@ -734,6 +772,7 @@ function renderAdminOrders(rows){
     const opts=ORDER_STATUS.map(s=>`<option value="${s}"${s===r.status?' selected':''}>${s}</option>`).join('');
     const noEnc=encodeURIComponent(r.noPesanan||'');
     return `<tr>
+      <td data-label="Kode"><span class="admin-code-pill">${escapeHtml(r.kodePesanan||r.noPesanan||'-')}</span></td>
       <td data-label="Nama">${escapeHtml(r.nama)}</td>
       <td data-label="WhatsApp">${escapeHtml(r.whatsapp)}</td>
       <td data-label="Tgl Ambil">${escapeHtml(formatDbDate(r.tanggalAmbil))}</td>
@@ -756,7 +795,10 @@ function renderAdminOrders(rows){
       const noEnc=encodeURIComponent(r.noPesanan||'');
       return `<div class="admin-mobile-card">
         <div class="admin-mobile-top">
-          <div class="admin-mobile-name">${escapeHtml(r.nama||'-')}</div>
+          <div>
+            <div class="admin-mobile-code">${escapeHtml(r.kodePesanan||r.noPesanan||'-')}</div>
+            <div class="admin-mobile-name">${escapeHtml(r.nama||'-')}</div>
+          </div>
           <div class="admin-mobile-total">${fmt(Number(r.total)||0)}</div>
         </div>
         <div class="admin-mobile-meta">
@@ -862,6 +904,13 @@ async function masukDatabaseOrder(){
   try{
     const res=await createOrderToSheet(lastInvoicePayload);
     if(res && res.success===false) throw new Error(res.message||'Gagal simpan');
+    if(res && (res.kodePesanan || res.noPesanan)){
+      lastInvoicePayload.kodePesanan=res.kodePesanan||res.noPesanan;
+      lastInvoicePayload.noPesanan=res.kodePesanan||res.noPesanan;
+      if(typeof applyKodePesananToInvoice==='function'){
+        applyKodePesananToInvoice(lastInvoicePayload.kodePesanan);
+      }
+    }
     toast(res && res.duplicate ? 'Order sudah ada, data diperbarui' : 'Order masuk database');
     showAdminPanel(true);
     loadOrdersFromSheet();

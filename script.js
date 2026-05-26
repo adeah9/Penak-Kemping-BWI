@@ -266,7 +266,7 @@ let lastCartRenderHash = '';
 let catalogFirstPaintDone = false;
 
 const GAS_WEB_APP_URL_KEY = 'PKB_GAS_WEB_APP_URL';
-const GAS_WEB_APP_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbwqhxBWdJzHtdj2qXFKrVNBka9sbSWZbWfH5YJzx874Znc3u0xe73-99jE98Pcu9KSn/exec';
+const GAS_WEB_APP_URL_DEFAULT = '';
 function normalizeGasEndpointUrl(url){
   const raw=String(url||'').trim();
   if(!raw)return'';
@@ -275,7 +275,7 @@ function normalizeGasEndpointUrl(url){
   return raw;
 }
 // Bisa dioverride sementara via:
-// localStorage.setItem('PKB_GAS_WEB_APP_URL', 'https://script.google.com/macros/s/AKfycbwU_dAaorkyN7WRdWru9dBcYyhu7v5U8nMVJzrtKkkWSRDvyEAlnYL1g6cGOnpWw11C/exec')
+ localStorage.setItem('PKB_GAS_WEB_APP_URL', 'https://script.google.com/macros/s/AKfycbyjDeT6Oz3IOogzU6mbiojZX7YIOiTGdqQsE_hfrakzdwCRkRJ0UgK_JyTavuhE3ins/exec')
 const GAS_WEB_APP_URL_OVERRIDE_RAW = localStorage.getItem(GAS_WEB_APP_URL_KEY)||'';
 const GAS_WEB_APP_URL_OVERRIDE = normalizeGasEndpointUrl(GAS_WEB_APP_URL_OVERRIDE_RAW);
 if(GAS_WEB_APP_URL_OVERRIDE_RAW && !GAS_WEB_APP_URL_OVERRIDE){
@@ -509,7 +509,8 @@ function buildCurrentOrderPayload(){
   const tgl=document.getElementById('tglPesan').value;
   const dur=parseInt(document.getElementById('durasiSewa').value)||1;
   const total=cart.reduce((sum,item)=>sum+(item.price*item.qty*dur),0);
-  return {
+  const payload = {
+    kodePesanan:'',
     noPesanan:'',
     nama,
     whatsapp:wa,
@@ -523,6 +524,42 @@ function buildCurrentOrderPayload(){
     waktuOrder:fmtDateIndonesia(new Date()),
     status:'Baru'
   };
+  const existingCode=(lastInvoicePayload && (lastInvoicePayload.kodePesanan || lastInvoicePayload.noPesanan)) || '';
+  if(existingCode && orderPayloadFingerprint(lastInvoicePayload)===orderPayloadFingerprint(payload)){
+    payload.kodePesanan=existingCode;
+    payload.noPesanan=existingCode;
+  }
+  return payload;
+}
+
+function orderPayloadFingerprint(order){
+  if(!order)return'';
+  return JSON.stringify({
+    nama:String(order.nama||'').trim(),
+    whatsapp:String(order.whatsapp||'').trim(),
+    jaminan:String(order.jaminan||'').trim(),
+    catatan:String(order.catatan||'').trim(),
+    tanggalAmbil:String(order.tanggalAmbil||'').trim(),
+    tanggalKembali:String(order.tanggalKembali||'').trim(),
+    durasi:Number(order.durasi||0),
+    daftarItem:String(order.daftarItem||'').trim(),
+    total:Number(order.total||0)
+  });
+}
+
+function getCurrentKodePesanan(){
+  const raw=(lastInvoicePayload && (lastInvoicePayload.kodePesanan || lastInvoicePayload.noPesanan)) || '';
+  const normalized=String(raw||'').trim().toUpperCase();
+  return /^PKB-[0-9A-Z]{3}$/.test(normalized) ? normalized : '';
+}
+
+function applyKodePesananToInvoice(kode){
+  const raw=String(kode||'').trim().toUpperCase();
+  const normalized=/^PKB-[0-9A-Z]{3}$/.test(raw)?raw:'';
+  const wrap=document.getElementById('rcptOrderCode');
+  const value=document.getElementById('rcptKodePesanan');
+  if(value)value.innerText=normalized||'-';
+  if(wrap)wrap.style.display=normalized?'inline-flex':'none';
 }
 
 
@@ -1150,6 +1187,7 @@ async function tampilRingkasan(){
     const kembali=document.getElementById('tglKembaliD').innerText;
 
     document.getElementById('rcptDate').innerText=fmtDateIndonesia(new Date());
+    applyKodePesananToInvoice(getCurrentKodePesanan());
     document.getElementById('rcptNama').innerText=nama;
     document.getElementById('rcptWA').innerText=wa||'-';
     document.getElementById('rcptJaminan').innerText=jaminan||'-';
@@ -1202,6 +1240,8 @@ function kirimWA(){
   const kembali=document.getElementById('tglKembaliD').innerText;
 
   let t=`*PESAN ALAT - PENAK KEMPING BWI*\n==============================\n`;
+  const kode=getCurrentKodePesanan();
+  if(kode){t+=`*Kode Pesanan:* ${kode}\n`;}
   t+=`*Nama:* ${nama||'-'}\n`;
   t+=`*WhatsApp:* ${wa||'-'}\n`;
   t+=`*Jaminan:* ${jaminan||'-'}\n`;
@@ -1210,7 +1250,7 @@ function kirimWA(){
   t+=`*Tgl Kembali:* ${kembali}\n`;
   t+=`*Durasi:* ${dur} Hari\n\n`;
   t+=`*Daftar Pesanan:*\n`;
-  cart.forEach(item=>{t+=`- ${item.name} x${item.qty} - ${fmt(item.price*item.qty)}/hari\n`});
+  cart.forEach((item,idx)=>{t+=`${idx+1}. ${item.name} x${item.qty} - ${fmt(item.price*item.qty)}/hari\n`});
   const perHari=cart.reduce((s,i)=>s+i.price*i.qty,0);
   t+=`\n*Total Semua:* ${fmt(perHari*dur)}\n`;
   t+=`(${fmt(perHari)}/hari x ${dur} hari)\n\n`;

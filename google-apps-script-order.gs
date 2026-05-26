@@ -3,6 +3,7 @@ const SPREADSHEET_ID_FALLBACK = '1JYywk5ud8KnQDriZaqeyla6Q_K1F4CM2cbdMfRyQHE';
 const SHEET_ORDERS = 'Orders';
 const SHEET_STOCK = 'Stock';
 const ORDER_HEADERS = [
+  'ID Internal',
   'Kode Pesanan',
   'Nama',
   'WhatsApp',
@@ -11,11 +12,41 @@ const ORDER_HEADERS = [
   'Tanggal Kembali',
   'Durasi',
   'Daftar Item',
-  'Total',
   'Waktu Order',
+  'Total',
   'Status',
   'Catatan'
 ];
+const ORDER_IDX = {
+  INTERNAL_ID: 0,
+  KODE: 1,
+  NAMA: 2,
+  WHATSAPP: 3,
+  JAMINAN: 4,
+  TANGGAL_AMBIL: 5,
+  TANGGAL_KEMBALI: 6,
+  DURASI: 7,
+  DAFTAR_ITEM: 8,
+  WAKTU_ORDER: 9,
+  TOTAL: 10,
+  STATUS: 11,
+  CATATAN: 12
+};
+const ORDER_COL = {
+  INTERNAL_ID: 1,
+  KODE: 2,
+  NAMA: 3,
+  WHATSAPP: 4,
+  JAMINAN: 5,
+  TANGGAL_AMBIL: 6,
+  TANGGAL_KEMBALI: 7,
+  DURASI: 8,
+  DAFTAR_ITEM: 9,
+  WAKTU_ORDER: 10,
+  TOTAL: 11,
+  STATUS: 12,
+  CATATAN: 13
+};
 const STOCK_HEADERS = ['Item ID', 'Nama Item', 'Status', 'Updated At'];
 const ORDER_STATUS_ALLOWED = ['Baru', 'Diproses', 'Diambil', 'Selesai', 'Cancel'];
 const STOCK_STATUS_ALLOWED = ['tersedia', 'habis', 'maintenance'];
@@ -133,7 +164,7 @@ function getOrdersSheet_() {
   let sh = ss.getSheetByName(SHEET_ORDERS);
   if (!sh) sh = ss.insertSheet(SHEET_ORDERS);
   ensureHeaders_(sh, ORDER_HEADERS);
-  migrateLegacyOrderHeader_(sh);
+  ensureOrdersFilterRange_(sh);
   return sh;
 }
 
@@ -146,6 +177,7 @@ function getStockSheet_() {
 }
 
 function ensureHeaders_(sheet, headers) {
+  if (sheet.getName && sheet.getName() === SHEET_ORDERS) migrateOrderSheetStructure_(sheet);
   const maxCol = Math.max(sheet.getLastColumn(), headers.length);
   const firstRow = maxCol > 0 ? sheet.getRange(1, 1, 1, maxCol).getValues()[0] : [];
   const isEmpty = firstRow.join('').trim() === '';
@@ -156,30 +188,171 @@ function ensureHeaders_(sheet, headers) {
     sheet.insertColumnsAfter(sheet.getMaxColumns(), headers.length - sheet.getMaxColumns());
   }
   const current = sheet.getRange(1, 1, 1, headers.length).getValues()[0];
-  const currentHeaderA = String(current[0] || '').trim();
-  // Backward compatibility: migrate legacy header label automatically.
-  if (isLegacyKodePesananHeader_(currentHeaderA)) {
-    sheet.getRange(1, 1).setValue('Kode Pesanan');
-    current[0] = 'Kode Pesanan';
-  }
-  const mismatch = headers.some(function (h, i) {
-    return String(current[i] || '') !== h;
-  });
+  const mismatch = headers.some(function (h, i) { return String(current[i] || '') !== h; });
   if (mismatch) {
     sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
   }
-  migrateLegacyOrderHeader_(sheet);
 }
 
-function isLegacyKodePesananHeader_(value) {
+function ensureOrdersFilterRange_(sheet) {
+  if (!sheet || !sheet.getName || sheet.getName() !== SHEET_ORDERS) return;
+  var totalRows = Math.max(sheet.getMaxRows(), 1);
+  var neededCols = ORDER_HEADERS.length; // wajib termasuk Catatan (kolom ke-13)
+  if (sheet.getMaxColumns() < neededCols) {
+    sheet.insertColumnsAfter(sheet.getMaxColumns(), neededCols - sheet.getMaxColumns());
+  }
+  var expectedRange = sheet.getRange(1, 1, totalRows, neededCols);
+  var existing = sheet.getFilter();
+  if (!existing) {
+    expectedRange.createFilter();
+    return;
+  }
+  var current = existing.getRange();
+  var sameShape =
+    current.getRow() === 1 &&
+    current.getColumn() === 1 &&
+    current.getNumRows() === totalRows &&
+    current.getNumColumns() === neededCols;
+  if (sameShape) return;
+  existing.remove();
+  expectedRange.createFilter();
+}
+
+function isInternalIdHeader_(value) {
   const compact = String(value || '').trim().toLowerCase().replace(/\s+/g, '');
   return compact === 'idinternal' || compact === 'internalid' || compact === 'orderid';
 }
 
-function migrateLegacyOrderHeader_(sheet) {
-  const headerA = String(sheet.getRange(1, 1).getValue() || '').trim();
-  if (isLegacyKodePesananHeader_(headerA)) {
-    sheet.getRange(1, 1).setValue('Kode Pesanan');
+function isKodePesananHeader_(value) {
+  const compact = String(value || '').trim().toLowerCase().replace(/\s+/g, '');
+  return compact === 'kodepesanan' || compact === 'nopesanan' || compact === 'nomorpesanan';
+}
+
+function normalizeHeaderToken_(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
+
+function buildOrderHeaderIndexMap_(headers) {
+  var map = {};
+  headers.forEach(function (h, i) {
+    var key = normalizeHeaderToken_(h);
+    if (!key) return;
+    if (typeof map[key] === 'undefined') map[key] = i;
+  });
+  return map;
+}
+
+function getOrderSourceIndex_(headerMap, canonicalHeader) {
+  switch (canonicalHeader) {
+    case 'ID Internal': {
+      var internalAliases = ['idinternal', 'internalid', 'orderid'];
+      for (var i = 0; i < internalAliases.length; i++) {
+        if (typeof headerMap[internalAliases[i]] !== 'undefined') return headerMap[internalAliases[i]];
+      }
+      return -1;
+    }
+    case 'Kode Pesanan': {
+      var codeAliases = ['kodepesanan', 'nopesanan', 'nomorpesanan'];
+      for (var j = 0; j < codeAliases.length; j++) {
+        if (typeof headerMap[codeAliases[j]] !== 'undefined') return headerMap[codeAliases[j]];
+      }
+      return -1;
+    }
+    default: {
+      var key = normalizeHeaderToken_(canonicalHeader);
+      if (typeof headerMap[key] !== 'undefined') return headerMap[key];
+      return -1;
+    }
+  }
+}
+
+function getOrderHeaderMapFromSheet_(sheet) {
+  var colCount = Math.max(sheet.getLastColumn(), ORDER_HEADERS.length);
+  var headers = colCount > 0 ? sheet.getRange(1, 1, 1, colCount).getValues()[0] : [];
+  var rawMap = buildOrderHeaderIndexMap_(headers);
+  var canonicalMap = {};
+  ORDER_HEADERS.forEach(function (header) {
+    var idx = getOrderSourceIndex_(rawMap, header);
+    if (idx >= 0) canonicalMap[header] = idx;
+  });
+  return canonicalMap;
+}
+
+function getCellByHeader_(row, headerMap, canonicalHeader) {
+  var idx = headerMap[canonicalHeader];
+  return typeof idx === 'number' && idx >= 0 ? row[idx] : '';
+}
+
+function migrateOrderSheetStructure_(sheet) {
+  var lastRow = sheet.getLastRow();
+  var lastCol = Math.max(sheet.getLastColumn(), ORDER_HEADERS.length);
+  var firstRow = lastCol > 0 ? sheet.getRange(1, 1, 1, lastCol).getValues()[0] : [];
+  var isEmpty = firstRow.join('').trim() === '';
+  if (isEmpty) return;
+
+  var isAlreadyCanonical = ORDER_HEADERS.every(function (h, i) {
+    return String(firstRow[i] || '').trim() === h;
+  });
+  if (isAlreadyCanonical) return;
+
+  var headerMap = buildOrderHeaderIndexMap_(firstRow);
+  var hasAnyKnownOrderHeader = ORDER_HEADERS.some(function (h) {
+    return getOrderSourceIndex_(headerMap, h) >= 0;
+  });
+  if (!hasAnyKnownOrderHeader) return;
+
+  var dataRows = [];
+  if (lastRow >= 2) {
+    dataRows = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+  }
+  var legacyManualRenamePattern =
+    isInternalIdHeader_(firstRow[0]) &&
+    isKodePesananHeader_(firstRow[1]) &&
+    normalizeHeaderToken_(firstRow[2]) === 'whatsapp';
+  if (legacyManualRenamePattern) {
+    var fixedRows = dataRows.map(function (row) {
+      return [
+        row[0] || '', // ID Internal
+        '',           // Kode Pesanan (akan diisi sanitizer)
+        row[1] || '', // Nama
+        row[2] || '', // WhatsApp
+        row[3] || '', // Jaminan
+        row[4] || '', // Tanggal Ambil
+        row[5] || '', // Tanggal Kembali
+        row[6] || '', // Durasi
+        row[7] || '', // Daftar Item
+        row[9] || '', // Waktu Order
+        row[8] || '', // Total
+        row[10] || '', // Status
+        row[11] || '' // Catatan
+      ];
+    });
+    if (sheet.getMaxColumns() < ORDER_HEADERS.length) {
+      sheet.insertColumnsAfter(sheet.getMaxColumns(), ORDER_HEADERS.length - sheet.getMaxColumns());
+    }
+    sheet.getRange(1, 1, 1, ORDER_HEADERS.length).setValues([ORDER_HEADERS]);
+    if (fixedRows.length) {
+      sheet.getRange(2, 1, fixedRows.length, ORDER_HEADERS.length).setValues(fixedRows);
+    }
+    return;
+  }
+  var realigned = dataRows.map(function (row) {
+    return ORDER_HEADERS.map(function (header) {
+      var srcIdx = getOrderSourceIndex_(headerMap, header);
+      if (srcIdx >= 0) return row[srcIdx];
+      return '';
+    });
+  });
+
+  if (sheet.getMaxColumns() < ORDER_HEADERS.length) {
+    sheet.insertColumnsAfter(sheet.getMaxColumns(), ORDER_HEADERS.length - sheet.getMaxColumns());
+  }
+  sheet.getRange(1, 1, 1, ORDER_HEADERS.length).setValues([ORDER_HEADERS]);
+  if (realigned.length) {
+    sheet.getRange(2, 1, realigned.length, ORDER_HEADERS.length).setValues(realigned);
   }
 }
 
@@ -398,7 +571,7 @@ function parseIndonesianLongDateToIso_(raw) {
 function sanitizeWaktuOrderColumn_(sh) {
   const lastRow = sh.getLastRow();
   if (lastRow < 2) return;
-  const range = sh.getRange(2, 10, lastRow - 1, 1);
+  const range = sh.getRange(2, ORDER_COL.WAKTU_ORDER, lastRow - 1, 1);
   const values = range.getValues();
   let changed = false;
   const next = values.map(function (r) {
@@ -413,7 +586,7 @@ function sanitizeWaktuOrderColumn_(sh) {
 function sanitizeTanggalColumns_(sh) {
   const lastRow = sh.getLastRow();
   if (lastRow < 2) return;
-  [5, 6].forEach(function (colIdx) {
+  [ORDER_COL.TANGGAL_AMBIL, ORDER_COL.TANGGAL_KEMBALI].forEach(function (colIdx) {
     const range = sh.getRange(2, colIdx, lastRow - 1, 1);
     const values = range.getValues();
     let changed = false;
@@ -427,71 +600,243 @@ function sanitizeTanggalColumns_(sh) {
   });
 }
 
-function isSimpleOrderCode_(value) {
-  return /^PKB-\d{3,}$/i.test(String(value || '').trim());
+function sheetDateToSerialNumber_(value) {
+  if (Object.prototype.toString.call(value) !== '[object Date]' || isNaN(value.getTime())) return NaN;
+  var utc = Date.UTC(value.getFullYear(), value.getMonth(), value.getDate());
+  var baseUtc = Date.UTC(1899, 11, 30);
+  return Math.round((utc - baseUtc) / 86400000);
+}
+
+function parseNumericTotal_(value) {
+  if (typeof value === 'number' && !isNaN(value)) return value;
+  var raw = String(value || '').trim();
+  if (!raw) return 0;
+  var normalized = raw
+    .replace(/rp/ig, '')
+    .replace(/\s+/g, '')
+    .replace(/[^0-9,.-]/g, '')
+    .replace(/\./g, '')
+    .replace(',', '.');
+  if (!/[0-9]/.test(normalized)) return 0;
+  var num = Number(normalized);
+  if (!isNaN(num) && isFinite(num)) return num;
+  return 0;
+}
+
+function sanitizeTotalColumn_(sh) {
+  var lastRow = sh.getLastRow();
+  if (lastRow < 2) return;
+  var range = sh.getRange(2, ORDER_COL.TOTAL, lastRow - 1, 1);
+  var values = range.getValues();
+  var changed = false;
+  var next = values.map(function (r) {
+    var parsed = parseNumericTotal_(r[0]);
+    if (Number(r[0]) !== Number(parsed)) changed = true;
+    return [parsed];
+  });
+  if (changed) range.setValues(next);
+}
+
+function looksLikeCurrencyText_(value) {
+  if (typeof value === 'number' && isFinite(value)) return true;
+  if (Object.prototype.toString.call(value) === '[object Date]') return false;
+  var raw = String(value || '').trim();
+  if (!raw) return false;
+  var compact = raw.replace(/rp/ig, '').replace(/\s+/g, '');
+  if (!compact) return false;
+  if (/[A-Z]/i.test(compact)) return false;
+  if (!/^-?[\d.,]+$/.test(compact)) return false;
+  var num = Number(compact.replace(/\./g, '').replace(',', '.'));
+  return !isNaN(num) && isFinite(num);
+}
+
+function repairLegacyWaktuTotalSwap_(sh) {
+  var lastRow = sh.getLastRow();
+  if (lastRow < 2) return;
+  var range = sh.getRange(2, 1, lastRow - 1, ORDER_HEADERS.length);
+  var rows = range.getValues();
+  var changed = false;
+  rows.forEach(function (row) {
+    var waktuVal = row[ORDER_IDX.WAKTU_ORDER];
+    var totalVal = row[ORDER_IDX.TOTAL];
+    var totalLooksDate = !!parseDateInput_(totalVal);
+    var waktuLooksDate = !!parseDateInput_(waktuVal);
+    if (totalLooksDate && !waktuLooksDate && looksLikeCurrencyText_(waktuVal)) {
+      row[ORDER_IDX.WAKTU_ORDER] = normalizeWaktuOrder_(totalVal);
+      row[ORDER_IDX.TOTAL] = parseNumericTotal_(waktuVal);
+      changed = true;
+    }
+  });
+  if (changed) range.setValues(rows);
+}
+
+function applyOrderColumnFormats_(sh) {
+  var lastRow = sh.getLastRow();
+  if (lastRow < 2) return;
+  var rowCount = lastRow - 1;
+  sh.getRange(2, ORDER_COL.INTERNAL_ID, rowCount, 1).setNumberFormat('@');
+  sh.getRange(2, ORDER_COL.KODE, rowCount, 1).setNumberFormat('@');
+  sh.getRange(2, ORDER_COL.WHATSAPP, rowCount, 1).setNumberFormat('@');
+  sh.getRange(2, ORDER_COL.TANGGAL_AMBIL, rowCount, 1).setNumberFormat('@');
+  sh.getRange(2, ORDER_COL.TANGGAL_KEMBALI, rowCount, 1).setNumberFormat('@');
+  sh.getRange(2, ORDER_COL.WAKTU_ORDER, rowCount, 1).setNumberFormat('@');
+  sh.getRange(2, ORDER_COL.DURASI, rowCount, 1).setNumberFormat('0');
+  sh.getRange(2, ORDER_COL.TOTAL, rowCount, 1).setNumberFormat('#,##0');
+}
+
+function isPublicOrderCode_(value) {
+  return /^PKB-[0-9A-Z]{3}$/.test(String(value || '').trim().toUpperCase());
 }
 
 function normalizeKodePesanan_(value) {
   var raw = String(value || '').trim().toUpperCase();
   if (!raw) return '';
-  if (/^ID-\d{3,}$/i.test(raw)) {
-    raw = raw.replace(/^ID-/i, 'PKB-');
+  if (/^ID-\d{3}$/i.test(raw)) raw = raw.replace(/^ID-/i, 'PKB-');
+  return isPublicOrderCode_(raw) ? raw : '';
+}
+
+function isLegacyInternalOrderCode_(value) {
+  var raw = String(value || '').trim().toUpperCase();
+  if (!raw) return false;
+  if (/^ORD[-_]/.test(raw)) return true;
+  if (/^INT[-_]/.test(raw)) return true;
+  if (/^[0-9A-F]{8,}$/.test(raw)) return true;
+  return false;
+}
+
+function lettersToIndex_(letters) {
+  var out = 0;
+  for (var i = 0; i < letters.length; i++) {
+    out = out * 26 + (letters.charCodeAt(i) - 65);
   }
-  if (isSimpleOrderCode_(raw)) return raw;
-  return '';
+  return out;
+}
+
+function indexToLetters_(index, length) {
+  var chars = new Array(length);
+  for (var i = length - 1; i >= 0; i--) {
+    chars[i] = String.fromCharCode(65 + (index % 26));
+    index = Math.floor(index / 26);
+  }
+  return chars.join('');
+}
+
+function orderCodeToSequence_(code) {
+  var body = String(code || '').trim().toUpperCase().replace(/^PKB-/, '');
+  if (/^\d{3}$/.test(body)) {
+    var numeric = Number(body);
+    return numeric >= 1 && numeric <= 999 ? numeric : 0;
+  }
+  var m = body.match(/^([A-Z])(\d{2})$/);
+  if (m) {
+    var num2 = Number(m[2]);
+    if (num2 >= 1 && num2 <= 99) return 1000 + ((m[1].charCodeAt(0) - 65) * 99) + (num2 - 1);
+  }
+  m = body.match(/^([A-Z]{2})(\d)$/);
+  if (m) {
+    var num1 = Number(m[2]);
+    if (num1 >= 1 && num1 <= 9) return 1000 + (26 * 99) + (lettersToIndex_(m[1]) * 9) + (num1 - 1);
+  }
+  if (/^[A-Z]{3}$/.test(body)) {
+    return 1000 + (26 * 99) + (26 * 26 * 9) + lettersToIndex_(body);
+  }
+  return 0;
+}
+
+function sequenceToOrderCode_(seq) {
+  var n = Number(seq || 0);
+  if (n >= 1 && n <= 999) return 'PKB-' + String(n).padStart(3, '0');
+  var rem = n - 1000;
+  if (rem >= 0 && rem < 26 * 99) {
+    return 'PKB-' + String.fromCharCode(65 + Math.floor(rem / 99)) + String((rem % 99) + 1).padStart(2, '0');
+  }
+  rem -= 26 * 99;
+  if (rem >= 0 && rem < 26 * 26 * 9) {
+    return 'PKB-' + indexToLetters_(Math.floor(rem / 9), 2) + String((rem % 9) + 1);
+  }
+  rem -= 26 * 26 * 9;
+  if (rem >= 0 && rem < 26 * 26 * 26) return 'PKB-' + indexToLetters_(rem, 3);
+  throw new Error('Kapasitas Kode Pesanan PKB-ZZZ sudah habis.');
+}
+
+const MAX_ORDER_SEQUENCE = 999 + (26 * 99) + (26 * 26 * 9) + (26 * 26 * 26);
+
+function collectUsedOrderCodes_(sh) {
+  var lastRow = sh.getLastRow();
+  var used = {};
+  if (lastRow < 2) return used;
+  var values = sh.getRange(2, ORDER_COL.KODE, lastRow - 1, 1).getValues();
+  values.forEach(function (r) {
+    var code = normalizeKodePesanan_(r[0]);
+    if (!code) return;
+    used[code] = true;
+  });
+  return used;
+}
+
+function nextAvailableKodePesanan_(usedCodes) {
+  var used = usedCodes || {};
+  for (var seq = 1; seq <= MAX_ORDER_SEQUENCE; seq++) {
+    var code = sequenceToOrderCode_(seq);
+    if (!used[code]) return code;
+  }
+  throw new Error('Kapasitas Kode Pesanan PKB-ZZZ sudah habis.');
 }
 
 function generateKodePesanan_(sheet) {
   var sh = sheet || getOrdersSheet_();
-  var lastRow = sh.getLastRow();
-  var maxNum = 0;
-  if (lastRow >= 2) {
-    var values = sh.getRange(2, 1, lastRow - 1, 1).getValues();
-    values.forEach(function (r) {
-      var code = String(r[0] || '').trim().toUpperCase();
-      if (/^ID-\d+$/i.test(code)) code = code.replace(/^ID-/i, 'PKB-');
-      var match = code.match(/^PKB-(\d+)$/);
-      if (!match) return;
-      var num = Number(match[1]);
-      if (num > maxNum) maxNum = num;
-    });
-  }
-  var next = maxNum + 1;
-  return 'PKB-' + String(next).padStart(3, '0');
+  var used = collectUsedOrderCodes_(sh);
+  return nextAvailableKodePesanan_(used);
 }
 
-function sanitizeKodePesananColumn_(sh) {
+function generateInternalOrderId_() {
+  return 'INT-' + Utilities.getUuid().replace(/-/g, '').slice(0, 8).toUpperCase();
+}
+
+function isValidInternalOrderId_(value) {
+  return /^INT-[A-Z0-9]{8}$/.test(String(value || '').trim().toUpperCase());
+}
+
+function sanitizeOrderIdentityColumns_(sh) {
   var lastRow = sh.getLastRow();
   if (lastRow < 2) return;
-  var range = sh.getRange(2, 1, lastRow - 1, 1);
-  var values = range.getValues();
+  var range = sh.getRange(2, 1, lastRow - 1, ORDER_HEADERS.length);
+  var rows = range.getValues();
   var changed = false;
-  var used = {};
-  var maxNum = 0;
-  values.forEach(function (r) {
-    var current = String(r[0] || '').trim().toUpperCase();
-    if (/^ID-\d+$/i.test(current)) current = current.replace(/^ID-/i, 'PKB-');
-    var match = current.match(/^PKB-(\d+)$/);
-    if (!match) return;
-    var num = Number(match[1]);
-    if (!num) return;
-    used[num] = true;
-    if (num > maxNum) maxNum = num;
+  var usedCodes = {};
+  var usedInternal = {};
+  var finalCodes = {};
+
+  rows.forEach(function (r) {
+    var code = normalizeKodePesanan_(r[ORDER_IDX.KODE]);
+    if (!code || usedCodes[code]) return;
+    usedCodes[code] = true;
   });
-  var nextNum = maxNum + 1;
-  var next = values.map(function (r) {
-    var current = String(r[0] || '').trim().toUpperCase();
-    var normalized = normalizeKodePesanan_(current);
-    if (!normalized) {
-      while (used[nextNum]) nextNum++;
-      normalized = 'PKB-' + String(nextNum).padStart(3, '0');
-      used[nextNum] = true;
-      nextNum++;
+
+  rows.forEach(function (r) {
+    var internalId = String(r[ORDER_IDX.INTERNAL_ID] || '').trim().toUpperCase();
+    if (!isValidInternalOrderId_(internalId) || usedInternal[internalId]) {
+      internalId = generateInternalOrderId_();
+      r[ORDER_IDX.INTERNAL_ID] = internalId;
+      changed = true;
     }
-    if (current !== normalized) changed = true;
-    return [normalized];
+    usedInternal[internalId] = true;
+
+    var currentCode = String(r[ORDER_IDX.KODE] || '').trim().toUpperCase();
+    var normalized = normalizeKodePesanan_(currentCode);
+    if (!normalized || finalCodes[normalized]) {
+      normalized = nextAvailableKodePesanan_(usedCodes);
+      r[ORDER_IDX.KODE] = normalized;
+      changed = true;
+    } else if (currentCode !== normalized) {
+      r[ORDER_IDX.KODE] = normalized;
+      changed = true;
+    }
+    usedCodes[normalized] = true;
+    finalCodes[normalized] = true;
   });
-  if (changed) range.setValues(next);
+
+  if (changed) range.setValues(rows);
 }
 
 function parseWaktuOrderForSortMs_(value) {
@@ -502,36 +847,55 @@ function parseWaktuOrderForSortMs_(value) {
 function sortOrdersSheet_(sh) {
   var sheet = sh || getOrdersSheet_();
   var lastRow = sheet.getLastRow();
-  if (lastRow < 3) return;
+  if (lastRow < 2) {
+    ensureOrdersFilterRange_(sheet);
+    return;
+  }
+  repairLegacyWaktuTotalSwap_(sheet);
+  if (lastRow < 3) {
+    sanitizeTanggalColumns_(sheet);
+    sanitizeWaktuOrderColumn_(sheet);
+    sanitizeTotalColumn_(sheet);
+    applyOrderColumnFormats_(sheet);
+    ensureOrdersFilterRange_(sheet);
+    return;
+  }
   var rowCount = lastRow - 1;
   var values = sheet.getRange(2, 1, rowCount, ORDER_HEADERS.length).getValues();
   values = values.map(function (r) {
     var next = r.slice();
-    next[4] = normalizeDateString_(next[4]); // tanggal ambil
-    next[5] = normalizeDateString_(next[5]); // tanggal kembali
-    next[9] = normalizeWaktuOrder_(next[9]); // waktu order (tanggal)
+    next[ORDER_IDX.TANGGAL_AMBIL] = normalizeDateString_(next[ORDER_IDX.TANGGAL_AMBIL]);
+    next[ORDER_IDX.TANGGAL_KEMBALI] = normalizeDateString_(next[ORDER_IDX.TANGGAL_KEMBALI]);
+    next[ORDER_IDX.WAKTU_ORDER] = normalizeWaktuOrder_(next[ORDER_IDX.WAKTU_ORDER]);
     return next;
   });
   values.sort(function (a, b) {
-    var aAmbilMs = parseWaktuOrderForSortMs_(a[4]);
-    var bAmbilMs = parseWaktuOrderForSortMs_(b[4]);
+    var aAmbilMs = parseWaktuOrderForSortMs_(a[ORDER_IDX.TANGGAL_AMBIL]);
+    var bAmbilMs = parseWaktuOrderForSortMs_(b[ORDER_IDX.TANGGAL_AMBIL]);
     if (aAmbilMs !== bAmbilMs) return bAmbilMs - aAmbilMs;
-    var aWaktu = parseWaktuOrderForSortMs_(a[9]);
-    var bWaktu = parseWaktuOrderForSortMs_(b[9]);
+    var aWaktu = parseWaktuOrderForSortMs_(a[ORDER_IDX.WAKTU_ORDER]);
+    var bWaktu = parseWaktuOrderForSortMs_(b[ORDER_IDX.WAKTU_ORDER]);
     if (aWaktu !== bWaktu) return bWaktu - aWaktu;
-    return String(b[0] || '').localeCompare(String(a[0] || ''));
+    return String(b[ORDER_IDX.KODE] || '').localeCompare(String(a[ORDER_IDX.KODE] || ''));
   });
   sheet.getRange(2, 1, rowCount, ORDER_HEADERS.length).setValues(values);
+  applyOrderColumnFormats_(sheet);
+  ensureOrdersFilterRange_(sheet);
 }
 
 function validateOrder_(o) {
   if (!o || typeof o !== 'object') throw new Error('Data order tidak valid.');
   if (!o.nama) throw new Error('nama wajib diisi.');
+  var totalNum = parseNumericTotal_(o.total);
+  if (!isFinite(totalNum) || totalNum < 0) throw new Error('total tidak valid.');
+  if (!parseDateInput_(o.tanggalAmbil)) throw new Error('tanggalAmbil tidak valid.');
+  if (!parseDateInput_(o.tanggalKembali)) throw new Error('tanggalKembali tidak valid.');
 }
 
 function orderToRow_(o) {
   return [
-    o.noPesanan || '',
+    o.idInternal || '',
+    o.kodePesanan || o.noPesanan || '',
     o.nama || '',
     o.whatsapp || '',
     o.jaminan || '',
@@ -539,64 +903,108 @@ function orderToRow_(o) {
     normalizeDateString_(o.tanggalKembali || ''),
     Number(o.durasi || 0),
     o.daftarItem || '',
-    Number(o.total || 0),
     normalizeWaktuOrder_(o.waktuOrder),
+    parseNumericTotal_(o.total),
     normalizeOrderStatus_(o.status || 'Baru'),
     o.catatan || ''
   ];
 }
 
+function rowToOrder_(row, headerMap) {
+  var obj = {
+    idInternal: String(getCellByHeader_(row, headerMap, 'ID Internal') || '').trim(),
+    kodePesanan: normalizeKodePesanan_(getCellByHeader_(row, headerMap, 'Kode Pesanan')),
+    nama: String(getCellByHeader_(row, headerMap, 'Nama') || '').trim(),
+    whatsapp: String(getCellByHeader_(row, headerMap, 'WhatsApp') || '').trim(),
+    jaminan: String(getCellByHeader_(row, headerMap, 'Jaminan') || '').trim(),
+    tanggalAmbil: normalizeDateString_(getCellByHeader_(row, headerMap, 'Tanggal Ambil')),
+    tanggalKembali: normalizeDateString_(getCellByHeader_(row, headerMap, 'Tanggal Kembali')),
+    durasi: Number(getCellByHeader_(row, headerMap, 'Durasi') || 0),
+    daftarItem: String(getCellByHeader_(row, headerMap, 'Daftar Item') || '').trim(),
+    total: parseNumericTotal_(getCellByHeader_(row, headerMap, 'Total')),
+    waktuOrder: normalizeWaktuOrder_(getCellByHeader_(row, headerMap, 'Waktu Order')),
+    status: normalizeOrderStatus_(getCellByHeader_(row, headerMap, 'Status')),
+    catatan: String(getCellByHeader_(row, headerMap, 'Catatan') || '').trim()
+  };
+  obj.noPesanan = obj.kodePesanan;
+  return obj;
+}
+
 function createOrUpsertOrder_(order) {
   validateOrder_(order);
-  const sh = getOrdersSheet_();
-  sanitizeKodePesananColumn_(sh);
-  sanitizeTanggalColumns_(sh);
-  const providedId = normalizeKodePesanan_(order.noPesanan || order.id || '');
-  const targetRow = providedId ? findRowByNoPesanan_(sh, providedId) : -1;
-  const orderCode = targetRow > 0
-    ? String(sh.getRange(targetRow, 1).getValue() || providedId || generateKodePesanan_(sh))
-    : (providedId || generateKodePesanan_(sh));
-  order.noPesanan = orderCode;
-  const row = orderToRow_(order);
-  if (targetRow > 0) {
-    sh.getRange(targetRow, 1, 1, ORDER_HEADERS.length).setValues([row]);
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    const sh = getOrdersSheet_();
+    sanitizeOrderIdentityColumns_(sh);
+    sanitizeTanggalColumns_(sh);
+    repairLegacyWaktuTotalSwap_(sh);
+    sanitizeWaktuOrderColumn_(sh);
+    sanitizeTotalColumn_(sh);
+    applyOrderColumnFormats_(sh);
+    const providedCode = normalizeKodePesanan_(order.kodePesanan || order.noPesanan || order.id || '');
+    const targetRow = providedCode ? findRowByOrderRef_(sh, providedCode) : -1;
+    const orderCode = targetRow > 0
+      ? String(sh.getRange(targetRow, ORDER_COL.KODE).getValue() || providedCode || generateKodePesanan_(sh))
+      : (providedCode || generateKodePesanan_(sh));
+    const internalId = targetRow > 0
+      ? String(sh.getRange(targetRow, ORDER_COL.INTERNAL_ID).getValue() || generateInternalOrderId_())
+      : generateInternalOrderId_();
+    order.idInternal = internalId;
+    order.kodePesanan = orderCode;
+    order.noPesanan = orderCode;
+    const row = orderToRow_(order);
+    if (targetRow > 0) {
+      sh.getRange(targetRow, 1, 1, ORDER_HEADERS.length).setValues([row]);
+      sortOrdersSheet_(sh);
+      return { success: true, duplicate: true, mode: 'updated', message: 'Order sudah ada, data diperbarui.', row: targetRow, kodePesanan: orderCode, noPesanan: orderCode };
+    }
+    const appendAt = Math.max(sh.getLastRow() + 1, 2);
+    sh.getRange(appendAt, 1, 1, ORDER_HEADERS.length).setValues([row]);
     sortOrdersSheet_(sh);
-    return { success: true, duplicate: true, mode: 'updated', message: 'Order sudah ada, data diperbarui.', row: targetRow };
+    return { success: true, duplicate: false, mode: 'created', message: 'Order ditambahkan.', row: appendAt, kodePesanan: orderCode, noPesanan: orderCode };
+  } finally {
+    lock.releaseLock();
   }
-  const appendAt = Math.max(sh.getLastRow() + 1, 2);
-  sh.getRange(appendAt, 1, 1, ORDER_HEADERS.length).setValues([row]);
-  sortOrdersSheet_(sh);
-  return { success: true, duplicate: false, mode: 'created', message: 'Order ditambahkan.', row: appendAt };
 }
 
 function listOrders_() {
   const sh = getOrdersSheet_();
-  sanitizeKodePesananColumn_(sh);
+  sanitizeOrderIdentityColumns_(sh);
   sanitizeTanggalColumns_(sh);
+  repairLegacyWaktuTotalSwap_(sh);
   sanitizeWaktuOrderColumn_(sh);
+  sanitizeTotalColumn_(sh);
+  applyOrderColumnFormats_(sh);
   sortOrdersSheet_(sh);
   const lastRow = sh.getLastRow();
   if (lastRow < 2) return { success: true, data: [] };
 
-  const values = sh.getRange(2, 1, lastRow - 1, ORDER_HEADERS.length).getValues();
+  const headerMap = getOrderHeaderMapFromSheet_(sh);
+  const values = sh.getRange(2, 1, lastRow - 1, Math.max(sh.getLastColumn(), ORDER_HEADERS.length)).getValues();
   const data = values
-    .filter(function (r) {
-      return String(r[0] || '').trim() !== '';
-    })
     .map(function (r) {
+      return rowToOrder_(r, headerMap);
+    })
+    .filter(function (o) {
+      return String(o.kodePesanan || '').trim() !== '' || String(o.nama || '').trim() !== '';
+    })
+    .map(function (o) {
       return {
-        noPesanan: r[0],
-        nama: r[1],
-        whatsapp: r[2],
-        jaminan: r[3],
-        tanggalAmbil: normalizeDateString_(r[4]),
-        tanggalKembali: normalizeDateString_(r[5]),
-        durasi: r[6],
-        daftarItem: r[7],
-        total: r[8],
-        waktuOrder: normalizeWaktuOrder_(r[9]),
-        status: normalizeOrderStatus_(r[10]),
-        catatan: r[11] || ''
+        idInternal: o.idInternal,
+        kodePesanan: o.kodePesanan,
+        noPesanan: o.kodePesanan,
+        nama: o.nama,
+        whatsapp: o.whatsapp,
+        jaminan: o.jaminan,
+        tanggalAmbil: o.tanggalAmbil,
+        tanggalKembali: o.tanggalKembali,
+        durasi: o.durasi,
+        daftarItem: o.daftarItem,
+        total: o.total,
+        waktuOrder: o.waktuOrder,
+        status: o.status,
+        catatan: o.catatan || ''
       };
     });
 
@@ -606,9 +1014,9 @@ function listOrders_() {
 function updateOrderStatus_(noPesanan, status) {
   if (!noPesanan) throw new Error('id order wajib diisi.');
   const sh = getOrdersSheet_();
-  const row = findRowByNoPesanan_(sh, noPesanan);
+  const row = findRowByOrderRef_(sh, noPesanan);
   if (row < 1) throw new Error('Order tidak ditemukan.');
-  sh.getRange(row, 11).setValue(normalizeOrderStatus_(status));
+  sh.getRange(row, ORDER_COL.STATUS).setValue(normalizeOrderStatus_(status));
   sortOrdersSheet_(sh);
   return { success: true, message: 'Status berhasil diupdate.', row: row };
 }
@@ -616,7 +1024,7 @@ function updateOrderStatus_(noPesanan, status) {
 function deleteOrder_(noPesanan) {
   if (!noPesanan) throw new Error('id order wajib diisi.');
   const sh = getOrdersSheet_();
-  const row = findRowByNoPesanan_(sh, noPesanan);
+  const row = findRowByOrderRef_(sh, noPesanan);
   if (row < 1) throw new Error('Order tidak ditemukan.');
   sh.deleteRow(row);
   sortOrdersSheet_(sh);
@@ -657,7 +1065,15 @@ function updateStock_(itemId, itemName, status) {
 }
 
 function findRowByNoPesanan_(sheet, noPesanan) {
-  return findRowById_(sheet, noPesanan, 1);
+  return findRowByOrderRef_(sheet, noPesanan);
+}
+
+function findRowByOrderRef_(sheet, value) {
+  var ref = String(value || '').trim();
+  if (!ref) return -1;
+  var byCode = findRowById_(sheet, ref, ORDER_COL.KODE);
+  if (byCode > 0) return byCode;
+  return findRowById_(sheet, ref, ORDER_COL.INTERNAL_ID);
 }
 
 function findRowById_(sheet, value, colIndex) {

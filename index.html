@@ -50,7 +50,7 @@
         <i class="fab fa-instagram"></i>
         <span>Instagram</span>
       </a>
-      <button class="hdr-admin hdr-admin-gear" id="adminAuthBtn" onclick="handleAdminAuth()" aria-label="Akses Admin" title="Akses Admin"><i class="fas fa-gear"></i></button>
+      <button class="hdr-admin" id="adminAuthBtn" onclick="handleAdminAuth()"><i class="fas fa-user-shield"></i><span>Login</span></button>
     </div>
   </div>
 </header>
@@ -148,9 +148,6 @@
               <div class="ret-mini-date" id="tglKembaliD">-</div>
             </div>
           </div>
-          <div class="confidence-strip" id="confidenceStripD" aria-live="polite">
-            <div class="confidence-status" id="confidenceStatusD"></div>
-          </div>
         </div>
         <div class="cart-list" id="cartListD">
           <div class="cart-empty" id="cartEmptyD">
@@ -206,14 +203,13 @@
         <input type="month" class="cf-input" id="adminFilterMonth" onchange="setAdminFilterMonthInput(this.value)" style="display:none">
       </div>
       <div class="admin-filter-item">
-        <div class="cf-label">Urutkan</div>
-        <select class="cf-input" id="adminSortMode" onchange="setAdminSortMode(this.value)">
-          <option value="date_desc">Tanggal terbaru</option>
-          <option value="date_asc">Tanggal terlama</option>
-        </select>
+        <div class="cf-label">Pencarian</div>
+        <div class="admin-search-box">
+          <i class="fas fa-search"></i>
+          <input type="text" class="cf-input" id="adminOrderSearch" placeholder="Cari kode, nama, atau WhatsApp..." oninput="onAdminSearchInput(this.value)">
+        </div>
       </div>
       <div class="admin-filter-btns">
-        <button class="admin-btn pri" onclick="applyAdminFilters()">Terapkan Filter</button>
         <button class="admin-btn" onclick="resetAdminFilters()">Reset Filter</button>
       </div>
     </div>
@@ -234,12 +230,6 @@
         <div class="admin-recap-label">Order Selesai</div>
         <div class="admin-recap-value" id="recapOrderDone">0</div>
       </div>
-    </div>
-    <div class="admin-recap-status" id="adminRecapStatusChips">
-      <span class="admin-recap-chip">Baru: <strong id="recapStatusBaru">0</strong></span>
-      <span class="admin-recap-chip">Diproses: <strong id="recapStatusDiproses">0</strong></span>
-      <span class="admin-recap-chip">Diambil: <strong id="recapStatusDiambil">0</strong></span>
-      <span class="admin-recap-chip">Cancel: <strong id="recapStatusCancel">0</strong></span>
     </div>
 
     <div class="admin-form-wrap" id="adminFormWrap">
@@ -333,6 +323,7 @@
       <table class="admin-table">
         <thead>
           <tr>
+            <th>Kode Pesanan</th>
             <th>Nama</th>
             <th>WhatsApp</th>
             <th>Tgl Ambil</th>
@@ -344,7 +335,7 @@
           </tr>
         </thead>
         <tbody id="adminOrdersBody">
-          <tr><td colspan="8" class="admin-empty">Belum ada data.</td></tr>
+          <tr><td colspan="9" class="admin-empty">Belum ada data.</td></tr>
         </tbody>
       </table>
     </div>
@@ -427,9 +418,6 @@
           <div class="ret-mini-lbl">Kembali</div>
           <div class="ret-mini-date" id="tglKembaliM">-</div>
         </div>
-      </div>
-      <div class="confidence-strip confidence-strip-mobile" id="confidenceStripM" aria-live="polite">
-        <div class="confidence-status" id="confidenceStatusM"></div>
       </div>
     </div>
   </div>
@@ -537,8 +525,38 @@
 </div>
 <div class="toast" id="toast"><i class="fas fa-circle-check"></i><span id="toastMsg">-</span></div>
 
+<script>
+  // Fallback handler for cached onclick references from older HTML/JS versions.
+  window.__pkbAdminLoginBridge = window.__pkbAdminLoginBridge || function () {
+    if (typeof window.submitAdminLogin === 'function') return window.submitAdminLogin();
+    if (typeof window.toast === 'function') window.toast('Script admin belum termuat. Refresh dulu (Ctrl+F5).');
+  };
+  window.loginAdminIn_ = window.loginAdminIn_ || window.__pkbAdminLoginBridge;
+  window.loginAdminIn = window.loginAdminIn || window.__pkbAdminLoginBridge;
+  window.loginAdmin = window.loginAdmin || window.__pkbAdminLoginBridge;
+  window.loginAdminin_ = window.loginAdminin_ || window.__pkbAdminLoginBridge;
+  window.loginAdminin = window.loginAdminin || window.__pkbAdminLoginBridge;
+  // Force-bind login actions to prevent stale inline handler names from cache.
+  (function () {
+    var loginBtn = document.querySelector('#modalAdminLogin .btn-print-act');
+    if (loginBtn) {
+      loginBtn.onclick = function (ev) {
+        if (ev && typeof ev.preventDefault === 'function') ev.preventDefault();
+        return window.__pkbAdminLoginBridge();
+      };
+    }
+    var passInput = document.getElementById('adminPassword');
+    if (passInput) {
+      passInput.onkeydown = function (ev) {
+        if (ev && ev.key === 'Enter') {
+          if (typeof ev.preventDefault === 'function') ev.preventDefault();
+          return window.__pkbAdminLoginBridge();
+        }
+      };
+    }
+  })();
+</script>
 <script src="script.js"></script>
 <script src="admin.js"></script>
 </body>
 </html>
-
